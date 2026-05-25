@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <!--
-  제주 시계열 3D 모니터링 지도 | JEJU MONITOR — 영역3: 동굴·용암동굴
-  버전: v1 (라이트 테마)
+  JEJU MONITOR — 제주 시계열 3D 모니터링 통합 지도
+  버전: integrated v1
   작성일: 2026.05.25
-  프로젝트: JEJU MONITOR (기존 JEJUGRAPHER 지도와 별개 신규 프로젝트)
-  영역: 3 / 5 (동굴·용암동굴). 천장 낙반·남조류 오염·개발 진동·뿌리 풍화·토사 매몰.
-  데이터: 10곳 (시급성 최상2·상3·중2·하3). 공개 3곳=좌표 실측 핀 표시 / 비공개 7곳=위치 보호 핀 비표시.
-  테마: 밝은 종이색 배경(라이트 테마) — 기존 JEJUGRAPHER·영역1·2 지도와 일관.
-  ★영역3 한정: 비공개·미개방 동굴 위치 보호 — 도굴·무단진입 방지 위해 좌표 비공개·핀 비표시. 읍·면 권역까지만 표기.
+  프로젝트: JEJU MONITOR (기존 JEJUGRAPHER 운동/촬영 지도와 별개 신규 프로젝트)
+  구조: 단일 페이지 통합. 상단 영역 탭으로 전환 + "전체보기" 토글로 영역 동시 표시.
+  수록: 영역1 자연 변화·붕괴(9) + 영역2 해수면·침수(12) + 영역3 동굴·용암동굴(10) = 31곳.
+        영역4(4·3 근현대 유산)·영역5(문화재 구조물)는 데이터 확보 후 합류 예정(탭 자리 표시).
+  컨셉: 소실 전제의 수동적 프레이밍을 폐기하고 → 보호·가상 개방·학술/변화 기록(가치 창출)로 재정의.
+        ① 아름다운 자연을 3D로 보존  ② 미공개 구간을 가상으로 누구나 만남  ③ 학술·보호 연구와 변화 추적 근거.
+  ★영역3 한정: 비공개·미개방 동굴(7곳) 위치 보호 — 도굴·무단진입 방지 위해 좌표 비공개·지도 핀 비표시(카드·표엔 표시).
+  테마: 밝은 종이색 배경(라이트) — 기존 JEJUGRAPHER·영역1·2·3과 일관.
   ※ 각 드론 정보엔 "비행 전 드론원스톱 등 별도 승인 확인 필수(항공안전법)" 명시.
 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JEJU MONITOR — 동굴·용암동굴</title>
+<title>JEJU MONITOR — 제주 시계열 3D 모니터링 통합 지도</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -22,7 +25,9 @@
   :root{
     --bg:#f4f1e8; --panel:#ffffff; --panel2:#f7f4ec; --ink:#1d3038; --ink2:#5e7077;
     --line:#dcd6c6; --sea:#1a7a8c; --sea-l:#2bb0c4; --accent:#0e5e8a;
-    --u1:#d2342a; --u2:#e07a1f; --u3:#d6a318; --u4:#3a9b8f;  /* 침수 시급성 */
+    --u1:#d2342a; --u2:#e07a1f; --u3:#d6a318; --u4:#3a9b8f;
+    /* 영역별 식별색 (전체보기에서 마커 테두리·탭 강조) */
+    --a1:#b5524a; --a2:#1a7a8c; --a3:#7a5cab;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
@@ -31,36 +36,57 @@
 
   /* 랜딩 */
   #landing{position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:28px;
-    background:radial-gradient(circle at 80% 8%,rgba(43,176,196,.20),transparent 55%),radial-gradient(circle at 10% 92%,rgba(14,94,138,.12),transparent 55%),#f4f1e8;}
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:30px;
+    background:radial-gradient(circle at 82% 6%,rgba(43,176,196,.20),transparent 55%),radial-gradient(circle at 8% 94%,rgba(122,92,171,.12),transparent 55%),#f4f1e8;}
   .brand{font-family:'Black Han Sans',sans-serif;font-size:13px;letter-spacing:4px;color:var(--sea);margin-bottom:8px;}
-  #landing h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(28px,6vw,54px);line-height:1.1;text-align:center;color:#16323b;}
+  #landing h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(28px,6vw,56px);line-height:1.12;text-align:center;color:#16323b;}
   #landing h1 em{font-style:normal;color:var(--accent);}
-  #landing .sub{color:#4a5e66;font-size:15px;margin-top:14px;text-align:center;max-width:640px;line-height:1.65;}
+  #landing .sub{color:#4a5e66;font-size:15px;margin-top:16px;text-align:center;max-width:680px;line-height:1.7;}
   #landing .sub b{color:var(--accent);}
-  .startbtn{margin-top:32px;font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:1px;color:#fff;
-    background:linear-gradient(92deg,var(--sea),var(--sea-l));border:none;border-radius:40px;padding:15px 42px;cursor:pointer;transition:.2s;box-shadow:0 8px 26px rgba(26,122,140,.3);}
+  .pillars{display:flex;gap:14px;margin-top:26px;flex-wrap:wrap;justify-content:center;max-width:760px;}
+  .pillar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;width:228px;text-align:left;box-shadow:0 3px 14px rgba(26,122,140,.07);}
+  .pillar .pi{font-size:20px;}
+  .pillar b{display:block;font-family:'Black Han Sans',sans-serif;font-size:15px;color:#16323b;margin:6px 0 5px;}
+  .pillar span{font-size:12.5px;color:var(--ink2);line-height:1.55;}
+  .startbtn{margin-top:30px;font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:1px;color:#fff;
+    background:linear-gradient(92deg,var(--sea),var(--sea-l));border:none;border-radius:40px;padding:15px 44px;cursor:pointer;transition:.2s;box-shadow:0 8px 26px rgba(26,122,140,.3);}
   .startbtn:hover{transform:translateY(-3px);box-shadow:0 12px 34px rgba(26,122,140,.42);}
-  .ldstats{display:flex;gap:16px;margin-top:30px;flex-wrap:wrap;justify-content:center;}
-  .ldstat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 20px;min-width:118px;text-align:center;box-shadow:0 3px 12px rgba(26,122,140,.06);}
+  .ldstats{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;justify-content:center;}
+  .ldstat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 20px;min-width:108px;text-align:center;box-shadow:0 3px 12px rgba(26,122,140,.06);}
   .ldstat b{font-family:'Black Han Sans',sans-serif;font-size:26px;display:block;}
   .ldstat span{font-size:12px;color:var(--ink2);}
-  #landing .foot{margin-top:28px;font-size:11px;color:#8a8270;text-align:center;line-height:1.7;max-width:680px;}
+  #landing .foot{margin-top:26px;font-size:11px;color:#8a8270;text-align:center;line-height:1.7;max-width:700px;}
 
   /* 앱 */
   #app{height:100%;display:flex;flex-direction:column;}
   .topbar{display:flex;align-items:center;gap:13px;padding:11px 20px;border-bottom:2px solid var(--sea);flex-wrap:wrap;background:#fff;}
   .topbar .home{cursor:pointer;font-family:'Black Han Sans',sans-serif;color:var(--sea);font-size:15px;border:none;background:none;}
-  .topbar .ttl{font-family:'Black Han Sans',sans-serif;font-size:15px;color:var(--ink);}
-  .topbar .ttl small{font-family:'Gowun Batang';color:var(--ink2);font-size:12px;display:block;font-weight:400;}
   .topbar .sp{flex:1;}
   .tbtn{font-family:'Gowun Batang';font-size:12.5px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer;transition:.15s;}
   .tbtn:hover{border-color:var(--sea);color:var(--sea);}
+  .tbtn.on{background:var(--sea);color:#fff;border-color:var(--sea);}
+
+  /* 영역 탭 바 */
+  .areabar{display:flex;align-items:center;gap:8px;padding:9px 20px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .atab{display:flex;align-items:center;gap:7px;font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--ink2);
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;position:relative;}
+  .atab .ai{font-size:15px;}
+  .atab .acount{font-family:'Gowun Batang';font-size:11px;color:var(--ink2);}
+  .atab:hover{border-color:var(--sea);}
+  .atab.active{color:#fff;}
+  .atab.soon{opacity:.5;cursor:not-allowed;}
+  .atab.soon::after{content:"준비 중";position:absolute;top:-8px;right:-6px;font-family:'Gowun Batang';font-size:9px;background:#b8b09a;color:#fff;border-radius:6px;padding:1px 5px;}
+  .areabar .allbtn{margin-left:auto;font-family:'Black Han Sans',sans-serif;font-size:12.5px;color:var(--ink2);
+    background:#fff;border:1px dashed var(--sea);border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;}
+  .areabar .allbtn.on{background:linear-gradient(92deg,var(--a1),var(--a2),var(--a3));color:#fff;border-style:solid;border-color:transparent;}
 
   .main{flex:1;display:flex;min-height:0;}
   #map{flex:1;background:#dfeef0;}
-  .side{width:300px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;}
-  .side h3{font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--sea);padding:14px 16px 8px;letter-spacing:1px;}
+  .side{width:312px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;}
+  .side .ahead{padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+  .side .ahead .an{font-family:'Black Han Sans',sans-serif;font-size:16px;color:#16323b;}
+  .side .ahead .ad{font-size:11.5px;color:var(--ink2);margin-top:5px;line-height:1.5;}
+  .side h3{font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--sea);padding:13px 16px 7px;letter-spacing:1px;}
   .filt{padding:0 12px 10px;}
   .frow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:.12s;font-size:13px;}
   .frow:hover{background:var(--panel2);}
@@ -70,11 +96,12 @@
   .legend{padding:10px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--ink2);line-height:1.7;}
   .legend b{color:var(--ink);}
 
-  .cards{padding:6px 12px 20px;}
+  .cards{padding:6px 12px 24px;}
   .card{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.15s;box-shadow:0 2px 8px rgba(26,122,140,.05);}
   .card:hover{border-color:var(--sea);transform:translateX(2px);box-shadow:0 4px 14px rgba(26,122,140,.12);}
   .card .ch{display:flex;align-items:baseline;gap:7px;}
   .card .rk{font-family:'Black Han Sans',sans-serif;font-size:12px;color:#fff;border-radius:5px;padding:1px 6px;flex-shrink:0;}
+  .card .ab{font-family:'Black Han Sans',sans-serif;font-size:9.5px;color:#fff;border-radius:4px;padding:1px 5px;margin-left:auto;flex-shrink:0;}
   .card .nm{font-size:13.5px;font-weight:700;line-height:1.3;}
   .card .rg{font-size:11px;color:var(--ink2);margin-top:5px;}
   .card .ct{font-size:11.5px;color:#3a4d54;margin-top:6px;line-height:1.45;}
@@ -84,7 +111,8 @@
     transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.15);}
   #detail.open{transform:translateX(0);}
   .dhead{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2;}
-  .dhead .urg{display:inline-block;font-family:'Black Han Sans',sans-serif;font-size:11px;padding:3px 11px;border-radius:20px;color:#fff;margin-bottom:9px;}
+  .dhead .badges{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap;}
+  .dhead .urg,.dhead .areatag{display:inline-block;font-family:'Black Han Sans',sans-serif;font-size:11px;padding:3px 11px;border-radius:20px;color:#fff;}
   .dhead h2{font-family:'Black Han Sans',sans-serif;font-size:21px;line-height:1.22;color:#16323b;}
   .dhead .rg{font-size:12.5px;color:var(--ink2);margin-top:7px;}
   .dclose{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--ink2);font-size:26px;cursor:pointer;line-height:1;}
@@ -117,45 +145,47 @@
   td .ub{display:inline-block;font-size:10.5px;font-family:'Black Han Sans',sans-serif;color:#fff;border-radius:4px;padding:1px 6px;}
 
   @media(max-width:780px){
-    .side{position:fixed;left:0;top:55px;bottom:0;z-index:900;transform:translateX(-100%);transition:transform .3s;width:84vw;max-width:320px;}
+    .side{position:fixed;left:0;top:104px;bottom:0;z-index:900;transform:translateX(-100%);transition:transform .3s;width:84vw;max-width:320px;}
     .side.open{transform:translateX(0);}
-    .topbar .ttl small{display:none;}
+    .atab .acount{display:none;}
   }
 </style>
 </head>
 <body>
 
 <div id="landing">
-  <div class="brand">JEJU MONITOR · AREA 3 / 5</div>
-  <h1>사라지기 전에,<br><em>기록한다</em></h1>
-  <p class="sub">칠흑 같은 어둠 속에서 부식되고·진동에 떨리고·천장이 무너지는 제주 지하 동굴을 시계열 3D로 기록·관찰하기 위한 지도입니다. 천장 낙반, 조명 남조류 오염, 개발 진동, 뿌리 기계적 풍화, 토사 매몰까지 — 각 동굴을 <b>변화 정량 근거 · 소관 기관 · 3D 기록 명분 · 권장 주기</b>와 함께 정리해, 관계 기관 제안 자료로 그대로 활용할 수 있습니다.</p>
-  <div class="ldstats">
-    <div class="ldstat"><b style="color:#d2342a">10</b><span>최우선 동굴</span></div>
-    <div class="ldstat"><b style="color:#d2342a">2</b><span>시급성 최상</span></div>
-    <div class="ldstat"><b style="color:#1a7a8c">7</b><span>위치 보호(비공개)</span></div>
+  <div class="brand">JEJU MONITOR</div>
+  <h1>제주를 <em>기록하고</em>,<br>지키고, <em>잇는다</em></h1>
+  <p class="sub">제주의 오름·동굴·해안 지형을 시계열 <b>3D로 기록</b>해 아름다운 자연을 <b>보존</b>하고, 출입이 통제된 미공개 구간을 <b>가상으로 누구나</b> 만나게 하며, 학술·보호 연구와 <b>변화 추적</b>의 근거로 삼기 위한 통합 지도입니다. 각 대상을 변화 정량 근거 · 소관 기관 · 3D 기록 명분 · 권장 주기와 함께 정리해, 관계 기관 제안 자료로 그대로 쓸 수 있습니다.</p>
+  <div class="pillars">
+    <div class="pillar"><div class="pi">🛡️</div><b>보존</b><span>무너지고·잠기고·부식되는 지형을 mm 단위 3D로 박제해 원형을 영구 보존하고 변화를 과학적으로 추적합니다.</span></div>
+    <div class="pillar"><div class="pi">🪐</div><b>가상 개방</b><span>출입이 금지된 비공개 동굴·험지를 Gaussian Splatting·VR로 복원해, 훼손 0%로 누구나 만나게 합니다.</span></div>
+    <div class="pillar"><div class="pi">📑</div><b>학술·근거</b><span>지질·생태·유산 연구와 재난 대비, 개발 진동 피해 입증의 객관적 디지털 근거를 제공합니다.</span></div>
   </div>
-  <button class="startbtn" onclick="enter()">지도 열기 →</button>
-  <div class="foot">영역 3 / 5 · 동굴·용암동굴 — 낙반·남조류 오염·개발 진동·뿌리 풍화·토사 매몰 등. 변화 진행 근거가 확인된 동굴만 수록. <b>비공개·미개방 동굴(7곳)은 도굴·무단진입 방지를 위해 정확 좌표·진입로를 표기하지 않고 읍·면 권역까지만 표시하며 지도 핀도 표시하지 않습니다.</b> 공개 동굴(3곳)만 좌표 실측 핀 표시. 외부 공개용 자료.</div>
+  <button class="startbtn" onclick="enter()">통합 지도 열기 →</button>
+  <div class="ldstats">
+    <div class="ldstat"><b style="color:var(--a1)">31</b><span>기록 대상</span></div>
+    <div class="ldstat"><b style="color:var(--sea)">3</b><span>영역 (총 5)</span></div>
+    <div class="ldstat"><b style="color:var(--a3)">7</b><span>가상 개방 후보</span></div>
+  </div>
+  <div class="foot">영역1 자연 변화·붕괴(9) · 영역2 해수면·침수(12) · 영역3 동굴·용암동굴(10) 수록. 영역4(4·3 근현대 유산)·영역5(문화재 구조물)는 데이터 확보 후 합류 예정. 비공개·미개방 동굴은 도굴·무단진입 방지를 위해 정확 좌표·진입로 비표시(읍·면 권역까지만, 지도 핀 미표시). 좌표 Google Places 실측. 외부 공개용 자료.</div>
 </div>
 
 <div id="app" class="hidden">
   <div class="topbar">
     <button class="home" onclick="goHome()">◂ JEJU MONITOR</button>
-    <div class="ttl">동굴·용암동굴<small>영역 3 / 5 · 시계열 3D 모니터링 후보 10곳 (공개3·비공개7)</small></div>
     <div class="sp"></div>
     <button class="tbtn" onclick="toggleSide()">☰ 목록</button>
     <button class="tbtn" onclick="openTables()">📊 기관별·시급성 표</button>
     <button class="tbtn" onclick="locateMe()">📍 내 위치</button>
   </div>
+  <div class="areabar" id="areabar"></div>
   <div class="main">
     <div class="side" id="side">
+      <div class="ahead" id="ahead"></div>
       <h3>시급성 필터</h3>
       <div class="filt" id="filt"></div>
-      <div class="legend">
-        <b>시급성 등급</b> — 훼손 진행성·위험 임박성·학술 가치 종합.<br>
-        ● 최상: 극심(낙반·현안 위협) / ● 상: 심각(개발·구조·조명) / ● 중: 경고(풍화·저심도) / ● 하: 주의(관리사각·응력·매몰)<br>
-        <span style="color:#8a8270">🔒 비공개 동굴은 위치 보호로 지도 핀 미표시 — 카드/표에서 상세 확인.</span>
-      </div>
+      <div class="legend" id="legend"></div>
       <h3>대상지 (시급성 순)</h3>
       <div class="cards" id="cards"></div>
     </div>
@@ -166,7 +196,7 @@
 <div id="detail">
   <div class="dhead">
     <button class="dclose" onclick="closeDetail()">×</button>
-    <span class="urg" id="dUrg"></span>
+    <div class="badges"><span class="areatag" id="dArea"></span><span class="urg" id="dUrg"></span></div>
     <h2 id="dName"></h2>
     <div class="rg" id="dRegion"></div>
   </div>
@@ -179,11 +209,222 @@
 </div>
 
 <script>
-// ===== JEJU MONITOR 영역3: 동굴·용암동굴 (시급성 순 10곳) =====
-// 필드: rank, urg, name, lat, lng, coordHidden, region, ctype, q[], qual, agency[], appeal[], cycle, access, src
-// urg: 1=최상(극심) 2=상(심각) 3=중(경고) 4=하(주의)
-// coordHidden:true = 비공개 동굴 → 지도 핀 비표시(카드·표에는 표시), lat/lng null
-const MON=[
+// ===== 영역 정의 (AREAS) — 각 영역 = id·이름·아이콘·색·설명·범례·데이터 =====
+// 영역1·2는 원본에 coordHidden 없음 → 런타임에서 (o.coordHidden||false)로 처리.
+// 영역4·5는 data 빈 배열 → 탭 '준비 중' 비활성, 데이터 확보 시 배열만 채우면 자동 활성화.
+const AREA1_DATA=[
+{rank:1,urg:1,name:"송악산 해안 단애·진지동굴 절벽",lat:33.1977951,lng:126.2919219,region:"서귀포시 대정읍 상모리",
+ ctype:"해안 절벽·퇴적층 붕괴, 암석 낙반, 토사 유출, 진지동굴 매몰",
+ q:["2025.09.18 제3전망대 인근 절벽 대규모 붕괴 — 2022년 안전진단 '주의 관찰구역' 적중","2024.09 탐방로 인근 낙석 / 2023.03 절벽 붕괴로 일제 갱도진지 입구 매몰","2022 서귀포시 정밀안전진단: 부남코지 주차장 60m 'D등급'(20m는 올레길 변경 수준), 460m 'C등급', 580m 'B등급'","2015.08~2027.07 정상부 자연휴식년제 통제 연장 중"],
+ qual:"약 3,800년 전 형성 수성화산체로 미고결 응회암 지반이 매우 연약 — 파도 기저부 침식·집중호우에 취약. 전문가 파도에너지 저감·출입 통제 강력 권고.",
+ agency:["서귀포시(공원녹지과·문화예술과)","제주도 세계유산본부(추정)"],
+ appeal:["재해 예측·안전 확보: D등급 위험 구간 지반 변위를 mm 단위 추적해 붕괴 전 선제 인명 통제","디지털 복원: 해식으로 소멸 중인 일제 진지동굴 원형 3D 아카이빙"],
+ cycle:"연 2회 + 집중호우·태풍 직후 (변화·붕괴 속도 최상)",
+ access:"지상 접근 낙석으로 철저 통제 → 해상 드론 비행 권장. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"한겨레·서귀포신문·연합뉴스 등 (보고서 출처 1~5)"},
+
+{rank:2,urg:1,name:"한라산 백록담 화구벽 (북벽·동능벽)",lat:33.3609514,lng:126.5357304,region:"제주시·서귀포시 경계 한라산 정상",
+ ctype:"화구벽 조면암·현무암 기반암 대형 균열, 자연 풍화, 암석 붕락·토양 유실",
+ q:["구체적 붕괴 면적·연간 후퇴율 등 정량 데이터 미확보 (최근에야 드론 3D 지형도 면적 분석 착수한 기초 단계)","동능벽 1차 붕괴 지역 연쇄로 2차 붕괴 우려 관측"],
+ qual:"육안 확인 가능한 대규모 자연 붕괴 진행 중. 북벽 능선은 밟으면 암석 흔들리는 토양 유실('채석장' 방불). 동능벽은 '어른 주먹' 크기 균열·상부 암반 절반 허공 부양. 추락 예정 암석이 하부 구상나무 숲 생태계 위협.",
+ agency:["제주도 세계유산본부","한라산국립공원관리소"],
+ appeal:["접근 불가 험지 원격 관측: 물리적 진입 불가한 수직 화구벽을 드론 LiDAR·사진측량으로 투시, 연간 침식 속도 계산","등반객 연쇄 붕괴 예측: 붕괴부가 성판악 전망대와 연결 — 3D 응력 분석으로 대피·통제 기준점 수학적 산출"],
+ cycle:"연 1회 (절리 팽창하는 해빙기 직후 권장)",
+ access:"국립공원 핵심 특별보호구역·천연기념물 보전지역. 지상 접근 절대 불가. ★비행·촬영 전 드론원스톱·문화재청·국립공원관리공단 특수목적 승인 철저 확인(자연공원법 위반 강력 제재). 좌표는 정상부 대표점, 실제 대상은 화구 내벽",
+ src:"노컷뉴스·한겨레 (보고서 출처 15~16)"},
+
+{rank:3,urg:1,name:"사계 황우치 해변 사구·백사장",lat:33.2373394,lng:126.3169839,region:"서귀포시 안덕면 사계리",
+ ctype:"해안 사구 급격 침식, 백사장 모래 대량 유실, 기반암 노출, 산책로 붕괴 위기",
+ q:["백사장 복원 위해 준설 모래·파쇄석 약 22만㎥ 투입했으나 단 2개월 만에 거의 전량 유실","해안 침식 방어 수중 방파제(잠제) 2기에 예산 160억 원 투입했으나 모래 유실 방어 완전 실패","도 당국 추측치: 화순항 방파제가 침식 원인의 약 60% 비중"],
+ qual:"화순항 돌출부두 건설로 인한 해류 변화가 근본 원인. 땜질식 토목 실패. 유실 모래가 사계리 해녀 어장을 덮어 해양 생태계 황폐화. 추가 석축 시 세계지질공원 용머리해안 미관 훼손 우려.",
+ agency:["제주특별자치도(해양수산국)","서귀포시"],
+ appeal:["국가 예산 타당성 검증: 160억 공법 실패 원인을 해안선 후퇴량·모래 3D 체적 변화 시계열로 증명","용머리해안 연쇄 붕괴 방어: 3D 지형+조류 흐름 시뮬레이션으로 핵심 지질유산 침식 파급 예측"],
+ cycle:"연 2회 (계절별 파랑 에너지·태풍 전후 비교)",
+ access:"접근 제약 낮으나 해수면 반사 3D 매핑 노이즈 주의. 해저 지형 위해 수심 라이다(Bathymetric LiDAR) 복합 운용 권장. ★드론원스톱 승인 필수",
+ src:"제주투데이·서귀포신문 (보고서 출처 10~11)"},
+
+{rank:4,urg:2,name:"수월봉 엉알해안 화산쇄설층 절벽",lat:33.3066894,lng:126.1640106,region:"제주시 한경면 고산리",
+ ctype:"화산쇄설층 해식애 붕락, 잦은 낙석",
+ q:["2024.04.17 6~7m 높이 절벽에서 1~2m 폭 구간 무너짐 — 산책로로 바위 추락","세계유산본부 모니터링: 최근 1년간 10여 차례 크고 작은 낙석 발생(2023~2024)","2023.12 서귀포 해역 지진 여파로 20m 높이 절벽 상층부 낙석","문화재청 국비 7,500만 원(안전진단)+5,000만 원(300m 펜스) 투입 이력"],
+ qual:"약 1.8만 년 전 천해 화산 폭발 화산재 판상 층리 — '화산학 지질 교과서'(천연기념물 제513호·유네스코 세계지질공원). 결속력 낮아 파도·바람·빗물 침식에 극도로 취약. 나무뿌리·빗물 침투로 지반 악화. 낙석으로 올레 12코스 전면 통제.",
+ agency:["국가유산청","제주도 세계유산본부","제주시"],
+ appeal:["초정밀 디지털 보존(Digital Twin): 멸실 불가피 시, 가우시안 스플래팅으로 '지질 교과서' 층리 질감을 영구 기록 → 가상 복원·학술 연구 대비","탐방로 안전 통제 기준 확립: 3D 변위 해석으로 낙석 고위험 지점 정밀 도출"],
+ cycle:"연 1회 + 지진·강풍 직후",
+ access:"낙석 위험 구역 지상 진입 불가. ★천연기념물 구역 — 비행·촬영 전 현상변경 허가+드론원스톱 공식 승인 반드시 사전 취득(문화재보호법)",
+ src:"조선일보·미디어제주·제주일보 (보고서 출처 12~14)"},
+
+{rank:5,urg:2,name:"천지연폭포 계곡 들머리 절벽",lat:33.246944,lng:126.554417,region:"서귀포시 천지동",
+ ctype:"난대림 지구 절벽 암반 균열, 생물기계적 풍화, 대형 낙석",
+ q:["2026.05.07 아침: 20m 높이 절벽에서 2m×2m·무게 약 2톤 암석 2개 추락","1998년 설치 삼중 안전펜스 철망 완전 돌파·파손","1996년 재해위험지구 지정 후 방재 정비 예산 280여억 원 투입 이력","1991년 균열 방지 시설에서 누락된 사각지대 구역에서 사고 발생"],
+ qual:"1960~70년대 식재 난대림 나무 뿌리 침투(균열)+토사 유출 결합 풍화. 연간 수백만 명 통행 핵심 구간으로 대규모 인명 피해 직전 징후. 서귀포시가 국가유산청에 긴급 지원 요청·합동 조사.",
+ agency:["국가유산청","서귀포시(관광지관리소)"],
+ appeal:["관광객 생명 직결 재해 예방: 식생 투과 LiDAR로 숨은 암반 균열 탐지, 2톤+ 낙석 하중 방어 맞춤 방지망 설계","복구 예산 산출 최적화: 토사 유실 체적 3D 정밀 산출해 응급복구비 청구 근거화"],
+ cycle:"연 1회 + 해빙기 직후 (토사 유실·균열 팽창 확인)",
+ access:"식생 밀집으로 일반 드론 사진측량 불가 — 다중 펄스 LiDAR 센서 장착 필수. ★천연기념물 보전 구역 — 비행 전 드론원스톱+국가유산청 공식 승인 필수",
+ src:"한겨레·제주매일 (보고서 출처 8~9)"},
+
+{rank:6,urg:3,name:"우도 검멀레 해안 응회암 단애",lat:33.4968266,lng:126.9667136,region:"제주시 우도면 (우도 동북사면)",
+ ctype:"해안 절개지 수직·수평 절리 팽창, 대형 낙석·붕괴",
+ q:["지질전문가 현장 조사 후 해안가 80m 구간 접근금지 안전보호책 설치","안전모 200개 긴급 구입·탐방로 착용 의무화 행정 조치","정밀안전진단 용역 예산 편성 이력 (연간 cm 변화율 데이터는 미확보)"],
+ qual:"화산재가 엉켜 쌓인 시루떡 형태 연약 응회암 지층. 지질전문가 합동 점검 결과 수평·수직 절리 심하게 발달 — 잠재 낙석위험 매우 높음 판정. 실제 대형 암석 추락 사고 확인. 연간 50만 명 방문 핵심 관광지.",
+ agency:["제주시(안전·관광 관련 부서)"],
+ appeal:["섬 지역 원격 안전망: 지리적 한계로 상시 점검 어려운 우도 절벽을 3D 데이터로 치환, 원격 변위 감시 체계 확립","안전 시설물 최적 설계: 붕괴 예방 구조물 설치 시 3D 모델로 미관 훼손 최소화·하중 부하 구조역학 설계"],
+ cycle:"2년 1회 (낙석 위험 상존하나 거대 변동 주기는 완만)",
+ access:"붕괴·낙석 위험 상존, 지상 접근 금지 → 해상 비행 비대면 스캐닝 권장. ★드론원스톱·해상 비행 규정 공식 승인 필수",
+ src:"제주의소리·제주일보 (보고서 출처 17~19)"},
+
+{rank:7,urg:3,name:"산방산 용머리해안 응회암 층리",lat:33.2316155,lng:126.3148321,region:"서귀포시 안덕면 사계리",
+ ctype:"해수면 상승 침수, 기저부 파랑 침식, 상부 해안 단애 대형 낙석",
+ q:["해수면 상승: 2000년 수변 높이 154cm → 2020년 164.1cm (20년간 약 10cm 상승 계측)","2014.11.06 낙석 파편에 의한 관광객 유혈 부상 사고","낙석 우려·만조 수위 상승으로 탐방로 출입 통제 일수 매년 급증 (매일 아침 SNS 통제 공지)"],
+ qual:"화산쇄설층 기저부가 파도에 직접 노출·침식되며 상부 하중을 못 견뎌 암석 추락 유발하는 해식애 붕락 메커니즘. 안전진단 후 접근금지 가이드라인·안전모 조건부 개방. 유네스코 세계지질공원 상징 명소.",
+ agency:["서귀포시(관광지관리소)","국가유산청"],
+ appeal:["기후위기 파급 3D 실증: 해수면 10cm 상승이 파식대 후퇴율에 미치는 영향을 시계열 체적 변화로 계측 → 전 세계 기후 교육 지표","통제선 과학화: 3D 응력 분석으로 돌출 암석 하중 한계 도출, 안전 가이드라인 이격 재산정"],
+ cycle:"연 1회 (침수 심화·파도 에너지 누적 확인)",
+ access:"해안선 돌풍·강풍 잦아 드론 추락 주의. 천연기념물 보전 구역. ★비행·촬영 전 천연기념물 드론원스톱 공식 승인+관리소 협의 철저",
+ src:"YouTube·동아일보·제주일보·제주의소리 (보고서 출처 20~24)"},
+
+{rank:8,urg:4,name:"대포·갯깍 주상절리대",lat:33.2412077,lng:126.3972753,region:"서귀포시 예래동(갯깍)·중문·대포 해안",
+ ctype:"현무암질 조면안산암 암석 기둥 붕괴, 수직 절리 단절·전도성 낙반",
+ q:["20~40m 높이 거대 해식애 절벽","낙석 위험으로 갯깍 구간 약 1.1km 산책로 2010년부터 전면 폐쇄 유지","학술 연구: 주상절리 암반 사면 보호 위해 링네트(RX-300·RX-150) 보강 공법 최적화 논문 존재","정확한 연간 붕괴 체적 등 정량 수치 미확보"],
+ qual:"용암 수축으로 형성된 육각 수직 절리가 쪼개져 결속력 낮음 — 파랑·풍화로 기둥 통째 무너지는 전도성 낙반 지속. 펜스에도 탐방객 무단 진입 빈번해 사고 위험 고조.",
+ agency:["서귀포시","국가유산청(대포 해안)"],
+ appeal:["구조 공학적 보강재 정밀 설계: 3D 모델로 암석 이격 측정·시뮬레이션해 링네트 설치 타점 최적화","단절 관광자원 3D 가상 개방: 장기 폐쇄 해식동굴 비경을 가우시안 스플래팅 실사 3D로 메타버스 관광 복원"],
+ cycle:"3년 1회 (평소 완만하나 붕괴 시 규모 거대)",
+ access:"지상 전면 폐쇄 구역 → 해상 비행 스캐닝 요망. ★비행 시 해안 돌풍·국가유산청 드론원스톱 공식 승인 규정 철저 준수",
+ src:"한국민족문화대백과·제주일보·대한토목학회 (보고서 출처 25~27)"},
+
+{rank:9,urg:4,name:"지표 훼손 오름군 (용눈이·도너리·문석이 등)",lat:33.4599676,lng:126.831477,region:"제주시 구좌읍·서귀포시 안덕면 등 전역",
+ ctype:"탐방객 답압·산악 오토바이 진입 등에 의한 식생 파괴, 표토 침식, 사면 파임",
+ q:["도너리오름: 2008년 휴식년제 최초 도입, 거듭 연장해 2026.12.31까지 2년 추가 통제 확정","용눈이오름: 2021.02~2023.07 약 2년 4개월 자연휴식년제(전면 통제) 후 부분 재개방","문석이오름: 오프로드 파괴로 2019.01 휴식년제, 2026.01 식생 회복 요건 충족했으나 사유지 관리차 통제 지속","단위 면적당 표토 유실량(cm) 등 정밀 체적 데이터 미확보"],
+ qual:"방송 출연 등으로 단기간 탐방객 급증 → 탐방로 사면 심각하게 패이고 새포아풀 등 식물 훼손·토양 유실 가속. 일부 오름은 산악 차량 인위적 지형 파괴.",
+ agency:["제주특별자치도(기후환경국)","제주시·서귀포시 공원녹지과"],
+ appeal:["자연휴식년제 행정 객관화: 식생 훼손 등급·통제 연장/해제를 3D 스캔 토양 회복/유실량(체적) 계량화로 정책 민원 대응 근거화","친환경 탐방로 재설계: 우수 흐름 침식 가속 구간 3D 시뮬레이션해 탐방 계단·배수 시설 최적 위치 산정"],
+ cycle:"연 1회 (지표면 스캔 유리한 늦가을·해빙기 직후)",
+ access:"비행고도 외 군사·관제권 저촉 없으면 항공 사진측량 용이. 식생 투과 위해 LiDAR 병행 권장. ★실제 비행 전 드론원스톱 일반 비행 승인 필수. 좌표는 대표(용눈이오름), 도너리·문석이 등은 상세 참조",
+ src:"연합뉴스·조선일보·미디어제주·제주일보 (보고서 출처 6·28~35)"}
+];
+const AREA2_DATA=[
+{rank:1,urg:1,name:"삼도2동 저지대·탑동 해안 (도심 침수)",lat:33.5158847,lng:126.5171112,region:"제주시 삼도2동 일원 (삼도119센터·탑동해안로)",
+ ctype:"대조기 만조+기상악화 중첩 도심 거주지 침수, 월파 피해",
+ q:["폭풍해일 시 해수면 264~297cm 만조 도달 (국립해양조사원)","태풍 '마이삭' 야간 만조(23:22) 중첩 — 마을 도로 40~50cm 침수(성인 무릎 깊이), 차량 수몰","주택 3가구 앞 침수로 주민 5명 소방서 긴급 대피","탑동 해안도로 월파로 보도블록 파손·해조류·돌멩이 도로 점거"],
+ qual:"제주 부근 최근 10년 해수면 연 4~7mm 상승 → 최고 조위 도달 빈도 증가 추세. 인구 밀집 도심 거주지+핵심 상업 인프라(호텔 등) 밀집으로 재산 피해 직결.",
+ agency:["제주특별자치도청(도민안전건강실)","제주시청(안전총괄과)"],
+ appeal:["방재 인프라 설계: mm 단위 3D 수치표고모델(DEM)로 해수면 10cm 상승 시 골목 확산을 유체역학 시뮬레이션 → 차수벽 높이·역류방지밸브·배수펌프장 입지 검증","재해위험지구 정비 예산 근거 마련"],
+ cycle:"연 2회 (태풍 내습기 전후) + 백중사리 등 대조기 특별 관측",
+ access:"도심지 비행 인파 통제·공항 관제권 주의. 지상 LiDAR 병행 필수. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"연합뉴스·제주의소리 등 (보고서 출처 4·15)"},
+
+{rank:2,urg:1,name:"우도 천진항 포구 (항만 인프라 상실)",lat:33.4915183,lng:126.9499391,region:"제주시 우도면 연평리",
+ ctype:"해수면 상승으로 물양장·항만 도로 정기적 수몰",
+ q:["대조기 예측 조위 '주의' 단계 초과 — 308cm 육박/초과 관측 (국립해양조사원)","물양장 설계기준 해수면 위 3~3.5m인데 만조 시 1m+ 추가 상승해 방어선 붕괴","제주 40년간 해수면 22cm 상승이 설계 초과 근본 원인","만조 때마다 항구 도로 20~30cm 침수, 기상악화 시 상가 화장실·욕실까지 해수 역류"],
+ qual:"천진항 기능 상실은 우도 전체 물류·관광 마비 의미. 평면적 대응(마대 쌓기)으로는 가속 상승 못 막음.",
+ agency:["해양수산부(어항 관리)","제주특별자치도청 해양수산국"],
+ appeal:["항만 증고 설계: 최저 간조 시 수심 라이다로 수면 아래~육상 배후지 연속 스캔, 침강 정도 파악·증고 높이 체적(㎥) 정량 산출","어촌뉴딜·항만 보강 예산 배정 정책 근거"],
+ cycle:"연 2회 (대조기 간조·만조 시점 비교 촬영)",
+ access:"여객선 운항 시간대 회피·강풍 시 비행 불가. 수중 지형 위해 수심 라이다(Bathymetric LiDAR) 필요. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"제주일보·제주의소리·JIBS (보고서 출처 3·9·10)"},
+
+{rank:3,urg:1,name:"외도동 월대천 하구 (감조하천 역류·범람)",lat:33.4933707,lng:126.4371054,region:"제주시 외도동 월대천 일원",
+ ctype:"해수면 상승에 따른 백워터(Backwater) — 하천 내륙 배수 마비·범람",
+ q:["한라산 1,000mm+ 기습 폭우 유입 시점과 대조기 만조(22~24시) 중첩으로 위험수위 초과 — 4년 만에 재발생","수위 급상승으로 산책로 범람, 인근 펜션 1층 완전 침수","관광객 3층 고립·지역 주민 90여 명 마을회관 긴급 대피(1급 재난)"],
+ qual:"상승하는 기본 해수면으로 빗물 빠질 유효 단면적 감소가 구조적 원인 — 기상 이변이 아님.",
+ agency:["제주시청(하천관리과)","제주특별자치도청(도민안전건강실)"],
+ appeal:["호안 증축 설계: 드론 LiDAR로 하천 바닥·인근 건물 고도 3D 스캔, 내륙 유입 유량과 만조 해수압 충돌 지점 모델링 → 호안 벽체 증축량·우수 저류지 판단","주민 생명 보호 방재 투자 근거"],
+ cycle:"연 1회 갈수기 정밀 스캔 + 집중호우 범람 직후 특별 기록",
+ access:"하천변 수목 우거져 수목 투과율 높은 LiDAR 사용 필수. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"국민일보·헤드라인제주·뉴시스·연합뉴스 (보고서 출처 11~14)"},
+
+{rank:4,urg:2,name:"대정 상모리 화석산지 (지질 타임캡슐 소실)",lat:33.1955,lng:126.2887,region:"서귀포시 대정읍 상모리 해안가 (송악산 인근)",
+ ctype:"해안선 후퇴·조간대 확대로 사람·동물 발자국 화석 마모·수몰",
+ q:["해안 절벽·암반이 최근 36년 새 13m 후퇴하는 극심한 침식 변형 관측","천연기념물(선사 발자국 화석산지) 원형 훼손 진행형","한 번 마모·수몰된 화석은 자연 복원 불가"],
+ qual:"해수면 절대 상승이 화석 상시 노출 조간대 면적 확대 → 파랑 충격·염수 풍화 가속. 13m 후퇴는 물리적 보존 조치만으로 한계.",
+ agency:["국가유산청","제주특별자치도 세계유산본부"],
+ appeal:["서브밀리미터 디지털 트윈: 근거리 지상 LiDAR+접사 사진측량으로 발자국 심도·질감까지 영구 3D 모델 — 소실 후 VR 고고학 연구·3D 프린팅 복제·디지털 교보재","좌표는 송악산 인근 근사(미확정), 정확 위치 확인 필요"],
+ cycle:"연 1회 (침식 모니터링)",
+ access:"조수간만 고려 간조(썰물) 시점 신속 스캔. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"한겨레 (보고서 출처 22)"},
+
+{rank:5,urg:2,name:"월정·함덕 해빈 (백사장 소실 가속)",lat:33.5559739,lng:126.7961709,region:"제주시 구좌읍 월정리·조천읍 함덕리",
+ ctype:"해수면 상승·파랑 에너지 증가에 따른 정선(汀線) 후퇴·침식",
+ q:["해수부 연안 침식 실태조사: 제주 연안 11곳 중 8곳 우려(C)/심각(D) 등급","월정·함덕은 1년 만에 '우려'→'심각' 악화로 침식 가속","배후 해안 사구 면적 최근 한 세대 만에 약 40% 급감"],
+ qual:"자연 방파제 기능 모래가 유실되나 사구 복원 사업은 개발에 밀려 작동 안 함. 방파 호안 설치해도 해류 변화로 침식 못 늦춤.",
+ agency:["해양수산부(연안 관리)","제주특별자치도청 해양수산국"],
+ appeal:["체적 정량화: RTK 드론으로 백사장+얕은 연안 초정밀 3D 표면모델(DSM) 시계열 구축, 유실 모래 체적(㎥) 계절·연도별 계산 → 잠제·양빈 사업 실효성 객관 측정·국비 근거","좌표는 월정 대표, 함덕(33.5434,126.6698) 별도"],
+ cycle:"연 2회 (태풍 직후 9~10월 + 동절기 1~2월 파랑 집중기 전후)",
+ access:"관광객 밀집으로 비수기·새벽 비행. 백사장 텍스처 부족 대비 지상기준점(GCP) 설치. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"제주일보·KCTV·YouTube (보고서 출처 19~21)"},
+
+{rank:6,urg:2,name:"온평 환해장성 (해안 방어 유산 침식)",lat:33.3873953,lng:126.89172,region:"서귀포시 성산읍 온평리 해안도로 변",
+ ctype:"파랑 침식·기단부 세굴로 전통 해안 돌담 방어벽 붕괴 위협",
+ q:["1~4지점 약 2,120m 도내 최장 환해장성","1998년 보호구역 지정·관리에도 해안 바싹 붙은 한계로 기단부 침식 위험 상존","돌만 쌓은 구조라 한 곳 변위 시 도미노 붕괴 위험"],
+ qual:"거센 파도 자연 침식으로 기단부 깎임 위험 + 관광지 개발 인위적 간섭으로 원형 훼손, 무방비 노출.",
+ agency:["국가유산청","제주특별자치도 세계유산본부"],
+ appeal:["복원 레고 조립도: 가우시안 스플래팅으로 돌 틈 이끼·질감까지 3D 디지털 트윈 — 붕괴 시 돌 하나하나 원위치 복원, 유지보수 예산 효율 극대화","돌담 3차원 맥락은 2D 도면으로 담을 수 없음. 좌표는 신산환해장성 인근(온평 권역) 대표"],
+ cycle:"연 1회 + 대형 태풍 통과 직후 파손 확인",
+ access:"2.1km 장거리 선형 비행·고도 일관성 유지. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"국가유산포털·제주의소리·제주일보 (보고서 출처 23~26)"},
+
+{rank:7,urg:3,name:"하도리 철새도래지 습지 (염수화·생태 붕괴)",lat:33.5038245,lng:126.8919426,region:"제주시 구좌읍 하도리 창흥동",
+ ctype:"해수면 상승·월파에 따른 습지 염수화·식생 고사",
+ q:["습지 면적 약 0.77㎢, 매년 30여 종·3,000~6,000마리 철새 월동 핵심 생태 자원","방어선 해맞이해안로 표고 불과 3~5m — 연 3.16mm(최대 7mm) 상승으로 안전 마진 급감","폭풍해일 월파 시 고농도 염수 습지 유입 → 갈대밭 고사·철새 먹이원 말살 우려"],
+ qual:"해맞이해안로가 습지 방파제·수문 역할. 생태계 붕괴는 시작되면 비가역적.",
+ agency:["환경부(영산강유역환경청)","제주시청(환경지도과)","제주도청(도로)"],
+ appeal:["염수 확산 예측: 다분광 센서(NDVI) 식생 지수 맵+해안도로·습지 고저차 3D 데이터로 염화피해 확산 면적 정량 예측 → 람사르 보존 정책·해안로 숭상 공사 타당성","기후위기 습지 변화 시계열 추적"],
+ cycle:"연 2회 (철새 없는 봄·가을, 식생 변화 추적)",
+ access:"생태계 절대 보전 구역. 겨울 조류 번식·월동기 소음 비행 금지·환경부 사전 승인. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"농사로 등 (보고서 출처 16)"},
+
+{rank:8,urg:3,name:"강정·신창·추자항 등 소규모 항포구 (상시 침수)",lat:33.2286952,lng:126.4769097,region:"서귀포시 강정동 / 제주시 한경면 신창리·추자면",
+ ctype:"대조기 만조 시 물양장·도로 구조적 침수, 외항 월파",
+ q:["도내 99개 소규모 어항 중 약 10%가 만조 시 구조적 침수 추산","물양장 설계 해수면 위 3~3.5m인데 40년 22cm 상승+대조기 만조로 3m 초과 범람","강정항 물양장 침수·외항 월파 일상화로 어선 안전 정박 위협","신창항·추자항도 도로 위 바닷물 범람 패턴"],
+ qual:"지방 소규모 어항은 중앙 대규모 인프라 투자 우선순위에서 밀리기 쉬우나 어민 생존권 직결.",
+ agency:["제주특별자치도청 해양수산국","각 행정시 해양수산과"],
+ appeal:["디지털 3D 어항 지도: 저비용 드론 사진측량으로 상습 침수 어항 주기 스캔·선제 아카이빙 → 어촌신활력증진사업 예산 설득·방파제 증고 우선순위 객관 기준","좌표는 강정항 대표, 신창항(33.3487,126.1811)·추자항(부속섬) 별도"],
+ cycle:"2~3년 단위 인프라 변위 모니터링",
+ access:"선박 마스트(Mast) 충돌 주의. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"제주일보 등 (보고서 본문)"},
+
+{rank:9,urg:3,name:"삼양 셋다리물·신촌 남당물 등 용천수 (염수화·수몰)",lat:33.5291134,lng:126.5891786,region:"제주시 삼양동 / 조천읍 신촌리",
+ ctype:"해수면 상승에 따른 해안 지하수(용출수) 염수화·노천탕 수몰 시간 증가",
+ q:["SEAWAT 3차원 모델: 33년 18cm 상승 기반, 2050/2100년 지하수 염수화 20.25%(RCP4.5)~25.13%(RCP8.5) 예측","신촌 남당물 과거(1999) 하루 2,601㎥ 용출량 근간 흔들림","조위 상승으로 썰물 때도 바닷물 덜 빠져 담수 풀장 소금물 잠식 시간 증가"],
+ qual:"용천수는 제주 전통 촌락 형성한 생명수. 해안선 바위 틈에서 솟는 특성상 기본 조위 상승에 직접 노출.",
+ agency:["제주특별자치도청(수자원본부)","제주시청(환경지도과)"],
+ appeal:["해수 쐐기 방어 설계: 최저 조위 시 수심 라이다로 노천탕 내부·주변 정밀 3D 스캔 → 해수면 mm 상승 시 바닷물 벽면 월류 역학 도출, 우회 배수로·보호벽 기초 설계","제주 '물 문화' 영구 아카이빙. 좌표는 삼양 셋다리물 대표"],
+ cycle:"연 1회 최저 간조 시기 (지형 노출 극대화)",
+ access:"물 반사 오류 방지 위해 수심 라이다(Bathymetric LiDAR) 필수 장착. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"한국수자원학회·제주환경일보·비짓제주·제주투데이 (보고서 출처 28~31)"},
+
+{rank:10,urg:4,name:"애월 구엄리 돌염전 (전통 생업 경관 수몰)",lat:33.4835042,lng:126.3764434,region:"제주시 애월읍 구엄리 해안도로 변",
+ ctype:"수직 단차 없는 평탄 암반 — 해수면 상승·월파로 점토 둑 소실·수몰",
+ q:["약 390년 역사 천연 현무암 소금밭(소금빌레)","구체적 침수 수치는 한정적이나, 연 3.16mm(최대 7mm) 상승 추세상 평탄 암반이라 소폭 상승에도 상시 수몰권","만조·파고 상승 시 월파로 점토 구획 둑이 쓸려 원형 소실 구조적 취약"],
+ qual:"바닷물이 암반 위 고여 반영 사진 명소이나, 둑 유실 시 흔적조차 안 남음. 해수면 상승 앞 속수무책.",
+ agency:["제주시청(관광진흥과)","국가유산청"],
+ appeal:["유지보수 매뉴얼: 드론+지상 카메라 가우시안 스플래팅으로 현무암 암반·둑 질감 복제 → 유실 시 원래 선형 복원·배리어프리 무장애 관광 실감 콘텐츠"],
+ cycle:"연 1회 (동절기 폭랑기 이후 파손 점검)",
+ access:"파도 비산(염분)으로 드론·렌즈 손상 주의. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"공공데이터포털·탐라민족 (보고서 출처 32~33)"},
+
+{rank:11,urg:4,name:"동한두기 해안 인프라 (반복 월파 파손)",lat:33.5170114,lng:126.5157551,region:"제주시 삼도2동 탑동 인접 (병문천 하구)",
+ ctype:"태풍+만조 중첩 무방비 침수, 월파로 호안 구조물 파손",
+ q:["12월 보름 대조기에도 침수 주의 단계 발령 — 기저 해수면 위험 수위","예측 조위 298~300cm 육박 시 해안가 통제 구역화","태풍 산바·마이삭 시 병문천 나뭇가지·쓰레기가 역류 해수와 충돌해 도로 점거·1층 침수"],
+ qual:"바다와 하천(병문천) 교차점으로 재난 파급 복합. 평면 사진으론 호안 미세 균열·지반 침하 발견 어려움.",
+ agency:["제주시청(안전총괄과)","제주특별자치도청(도민안전건강실)"],
+ appeal:["변위량 추적: 가우시안 스플래팅으로 침수 전후 도로·방파제 3D 중첩, 파도 충격 구조물 변형량 파악 → 해수면 반영한 근본 해안 인프라 재건축을 중앙부처에 요구하는 시각 자료"],
+ cycle:"연 1회 + 폭풍해일·태풍 직후 인프라 파손 조사",
+ access:"강한 해풍 제약. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"제주의소리 등 (보고서 출처 5·15)"},
+
+{rank:12,urg:2,name:"북촌 환해장성·도대불 (복합 해양 유산 수난)",lat:33.5512176,lng:126.6933268,region:"제주시 조천읍 북촌리 해안",
+ ctype:"해수면 상승·대조기 월파에 따른 기단부 염수 부식·박리·형상 붕괴",
+ q:["북촌 도대불: 1915년 축조 현존 도내 최고령 민간 등대(현무암 상자형, 높이 2.6m·하단 2.4m·상단 1.93m)","북촌 환해장성: 허용기준 일부 완화 등 관리 대상","바닷물 부식력(백화·박리)으로 돌 표면 점차 바스러짐"],
+ qual:"바다와 극도로 인접해 보존 위협. 환해장성은 인근 펜션 업주가 조망권 이유로 임의 훼손한 사건 발생할 만큼 취약. 도대불은 4·3 당시 목대 소실 수난 이력 + 이제 해수면·월파로 기단부 염분 풍화.",
+ agency:["국가유산청","제주특별자치도 세계유산본부"],
+ appeal:["100년 전 해안 VR 복원: 텍스처 매핑 포함 고해상도 3D 모델로 돌 부식 전 형상 기록 — 수몰·형태 상실 후에도 북촌 해안 100년 전 풍경을 메타버스 역사 관광으로","어업 환경 보여주는 20세기 초 랜드마크 디지털 보존"],
+ cycle:"2년 단위 정밀 기록·갱신",
+ access:"암초 지대 위치로 지상 LiDAR 접근 한계 — 드론 측량 선호. ★실제 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법)",
+ src:"국가유산포털·제주의소리·지역N문화 (보고서 출처 24·26·27)"}
+];
+const AREA3_DATA=[
 {rank:1,urg:1,name:"만장굴 (거문오름 용암동굴계)",lat:33.5282463,lng:126.7702874,coordHidden:false,region:"제주시 구좌읍 (공개 동굴)",
  ctype:"천장 낙반(안전 위험), 조명에 의한 남조류(Lampenflora) 오염, 답압 및 훼손",
  q:["2023.01.26 제1입구 복층 부근 약 5m 높이 천장에서 가로·세로 약 2m 거대 현무암 암편 낙석 발생(야간, 인명피해 면함)","낙석 후 약 2개월 전면 폐쇄·일제점검 → 2023.03.24 재개방","조명 설치 구역 반경 90% 이상 암벽에서 녹색 오염(남조류·이끼류) 과밀 번식 관찰","총길이 약 7.416km(세계 12위), 개방 구간 약 1km / 균열계 10개(공개8·비공개2)·육안 점검만으로 7.4km 천장 미세 변위 감지 불가"],
@@ -285,11 +526,34 @@ const MON=[
  src:"만장굴 나무위키·세계유산본부 정책자료·지반함몰 대응 연구(코딜) (보고서 출처 9·18·36)"}
 ];
 
-
+const AREAS=[
+ {id:1,name:"자연 변화·붕괴 지형",short:"자연·붕괴",icon:"⛰️",color:"var(--a1)",colorHex:"#b5524a",
+  desc:"화구벽 붕괴·해식애 후퇴·사구 침식·오름 지표 훼손. 무너지고 깎이는 지형.",
+  legend:"● 최상: 즉시 / ● 상: 1년 내 / ● 중: 응급통제 중 / ● 하: 점진적 변화",
+  data:AREA1_DATA},
+ {id:2,name:"해수면 상승·침수 위험 지형",short:"해수면·침수",icon:"🌊",color:"var(--a2)",colorHex:"#1a7a8c",
+  desc:"만조·폭풍해일 침수, 해안 후퇴·염해로 잠기거나 사라질 저지대 인프라·유적·마을·습지.",
+  legend:"● 최상: 상습 침수·대피 / ● 상: 소실 임박 / ● 중: 생태·인프라 / ● 하: 점진적",
+  data:AREA2_DATA},
+ {id:3,name:"동굴·용암동굴",short:"동굴",icon:"🕳️",color:"var(--a3)",colorHex:"#7a5cab",
+  desc:"천장 낙반·남조류 오염·개발 진동·뿌리 풍화·토사 매몰. 비공개 동굴은 위치 보호(핀 미표시).",
+  legend:"● 최상: 극심(낙반·현안) / ● 상: 심각(개발·구조·조명) / ● 중: 경고(풍화·저심도) / ● 하: 주의(관리사각·응력·매몰)<br><span style='color:#8a8270'>🔒 비공개 동굴은 위치 보호로 지도 핀 미표시 — 카드/표에서 상세 확인.</span>",
+  data:AREA3_DATA},
+ {id:4,name:"4·3 및 근현대 유산",short:"4·3·근현대",icon:"🕯️",color:"#6b7f4a",colorHex:"#6b7f4a",
+  desc:"진지동굴·잃어버린 마을·피난처 등 소실·풍화 중인 역사 현장. (데이터 확보 후 합류)",
+  legend:"데이터 준비 중", data:[]},
+ {id:5,name:"문화재·구조물 노후·훼손",short:"문화재·구조물",icon:"🏛️",color:"#a8843a",colorHex:"#a8843a",
+  desc:"석조 문화재·초가·돌담·등대 등 마모·풍화. (데이터 확보 후 합류)",
+  legend:"데이터 준비 중", data:[]},
+];
 
 const URG={1:{t:'시급성 최상'},2:{t:'시급성 상'},3:{t:'시급성 중'},4:{t:'시급성 하'}};
 const urgColor=u=>({1:'#d2342a',2:'#e07a1f',3:'#d6a318',4:'#3a9b8f'}[u]);
+const areaById=id=>AREAS.find(a=>a.id===id);
+const isHidden=o=>!!o.coordHidden || o.lat==null || o.lng==null;
+
 let map, markers=[], activeUrg={1:true,2:true,3:true,4:true};
+let curArea=1, allMode=false;
 
 function enter(){
   document.getElementById('landing').classList.add('hidden');
@@ -305,14 +569,69 @@ function goHome(){
 function toggleSide(){document.getElementById('side').classList.toggle('open');}
 
 function initMap(){
-  map=L.map('map',{zoomControl:true}).setView([33.36,126.53],10);
+  map=L.map('map',{zoomControl:true}).setView([33.40,126.53],10);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
     attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19,subdomains:'abcd'}).addTo(map);
-  buildFilters(); render();
+  buildAreaBar(); selectArea(1); 
+}
+
+// ===== 영역 탭 바 =====
+function buildAreaBar(){
+  const bar=document.getElementById('areabar'); bar.innerHTML='';
+  AREAS.forEach(a=>{
+    const empty=a.data.length===0;
+    const t=document.createElement('button');
+    t.className='atab'+(empty?' soon':'')+(!allMode&&a.id===curArea?' active':'');
+    if(!allMode&&a.id===curArea){ t.style.background=a.colorHex; t.style.borderColor=a.colorHex; }
+    t.innerHTML=`<span class="ai">${a.icon}</span><span>${a.short}</span>`+(empty?'':`<span class="acount">${a.data.length}</span>`);
+    t.onclick=()=>{ if(empty){return;} allMode=false; selectArea(a.id); };
+    bar.appendChild(t);
+  });
+  const all=document.createElement('button');
+  all.className='allbtn'+(allMode?' on':''); all.id='allbtn';
+  all.textContent= allMode?'◉ 전체보기 켜짐':'◎ 전체보기';
+  all.onclick=()=>toggleAll();
+  bar.appendChild(all);
+}
+
+function selectArea(id){
+  curArea=id; allMode=false;
+  activeUrg={1:true,2:true,3:true,4:true};
+  buildAreaBar(); buildFilters(); buildAhead(); render();
+  const a=areaById(id);
+  // 영역 데이터 경계로 지도 맞춤
+  const pts=a.data.filter(o=>!isHidden(o)).map(o=>[o.lat,o.lng]);
+  if(pts.length){ map.flyToBounds(pts,{padding:[60,60],maxZoom:11,duration:.7}); }
+}
+
+function toggleAll(){
+  allMode=!allMode;
+  activeUrg={1:true,2:true,3:true,4:true};
+  buildAreaBar(); buildFilters(); buildAhead(); render();
+  if(allMode){ map.flyTo([33.40,126.53],10,{duration:.7}); }
+}
+
+// 현재 보여줄 대상 목록(영역 또는 전체)
+function currentList(){
+  let list;
+  if(allMode){ list=[]; AREAS.forEach(a=>a.data.forEach(o=>list.push(Object.assign({_area:a.id},o)))); }
+  else{ const a=areaById(curArea); list=a.data.map(o=>Object.assign({_area:a.id},o)); }
+  return list.filter(o=>activeUrg[o.urg]);
+}
+
+function buildAhead(){
+  const el=document.getElementById('ahead');
+  if(allMode){
+    el.innerHTML=`<div class="an">전체보기 · 31곳</div><div class="ad">영역1·2·3 동시 표시. 마커 테두리 색 = 영역 구분. 영역 탭을 누르면 단일 영역 집중 보기로 돌아갑니다.</div>`;
+  }else{
+    const a=areaById(curArea);
+    el.innerHTML=`<div class="an">${a.icon} ${a.name}</div><div class="ad">영역 ${a.id} / 5 · ${a.desc}</div>`;
+  }
 }
 
 function buildFilters(){
-  const cnt={1:0,2:0,3:0,4:0}; MON.forEach(o=>cnt[o.urg]++);
+  const list = allMode ? [].concat(...AREAS.map(a=>a.data)) : areaById(curArea).data;
+  const cnt={1:0,2:0,3:0,4:0}; list.forEach(o=>cnt[o.urg]++);
   const el=document.getElementById('filt'); el.innerHTML='';
   [1,2,3,4].forEach(u=>{
     const d=document.createElement('div'); d.className='frow'+(activeUrg[u]?'':' off'); d.dataset.u=u;
@@ -320,48 +639,65 @@ function buildFilters(){
     d.onclick=()=>{activeUrg[u]=!activeUrg[u]; d.classList.toggle('off'); render();};
     el.appendChild(d);
   });
+  // 범례
+  const lg=document.getElementById('legend');
+  if(allMode){
+    lg.innerHTML=`<b>시급성 등급</b> — 영역별 기준 종합.<br>● 최상 / ● 상 / ● 중 / ● 하<br>`+
+      AREAS.filter(a=>a.data.length).map(a=>`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:2px solid ${a.colorHex};margin-right:4px;vertical-align:middle"></span>${a.short}`).join(' · ')+
+      `<br><span style="color:#8a8270">🔒 비공개 동굴은 지도 핀 미표시 — 카드/표 확인.</span>`;
+  }else{
+    lg.innerHTML=`<b>시급성 등급</b><br>${areaById(curArea).legend}`;
+  }
 }
 
 function render(){
   markers.forEach(m=>map.removeLayer(m)); markers=[];
-  const list=MON.filter(o=>activeUrg[o.urg]).sort((a,b)=>a.rank-b.rank);
-  // 지도 마커: 공개 동굴(coordHidden=false, 좌표 있음)만 표시. 비공개는 위치 보호로 핀 비표시.
-  list.filter(o=>!o.coordHidden && o.lat!=null && o.lng!=null).forEach(o=>{
+  const list=currentList().sort((a,b)=>(a._area-b._area)||(a.rank-b.rank));
+  // 지도 마커: 좌표 공개분만(비공개 동굴 핀 비표시)
+  list.filter(o=>!isHidden(o)).forEach(o=>{
     const col=urgColor(o.urg);
-    const ic=L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${col};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-family:sans-serif;font-weight:700;font-size:12px;color:#fff;">${o.rank}</span></div>`,iconSize:[26,26],iconAnchor:[13,26]});
+    const ring = allMode ? areaById(o._area).colorHex : '#ffffff';
+    const ic=L.divIcon({className:'',html:`<div style="width:27px;height:27px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${col};border:3px solid ${ring};box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-family:sans-serif;font-weight:700;font-size:11px;color:#fff;">${o.rank}</span></div>`,iconSize:[27,27],iconAnchor:[13,27]});
     const m=L.marker([o.lat,o.lng],{icon:ic}).addTo(map);
-    m.bindPopup(`<b style="font-size:13px">${o.rank}. ${o.name}</b><br><span style="color:#888;font-size:11px">${o.region}</span><br><span style="font-size:12px">${o.ctype}</span><br><a href="#" onclick="openDetail(${o.rank});return false;" style="color:#1a7a8c;font-size:12px">상세 보기 →</a>`);
+    const atag = allMode?`<span style="color:${areaById(o._area).colorHex};font-size:11px;font-weight:700">${areaById(o._area).icon} ${areaById(o._area).short}</span><br>`:'';
+    m.bindPopup(`${atag}<b style="font-size:13px">${o.rank}. ${o.name}</b><br><span style="color:#888;font-size:11px">${o.region}</span><br><span style="font-size:12px">${o.ctype}</span><br><a href="#" onclick="openDetail(${o._area},${o.rank});return false;" style="color:#1a7a8c;font-size:12px">상세 보기 →</a>`);
     m.on('click',()=>m.openPopup());
     markers.push(m);
   });
-  // 카드 리스트: 공개·비공개 전부 표시. 비공개는 자물쇠 표기, 클릭 시 flyTo 없이 detail만.
+  // 카드 리스트: 공개·비공개 전부
   const cb=document.getElementById('cards'); cb.innerHTML='';
   list.forEach(o=>{
-    const col=urgColor(o.urg);
+    const col=urgColor(o.urg), hid=isHidden(o), ar=areaById(o._area);
     const c=document.createElement('div'); c.className='card'; c.style.borderLeftColor=col;
-    const lock=o.coordHidden?' <span style="font-size:11px;color:#8a8270">🔒 위치 보호</span>':'';
-    c.innerHTML=`<div class="ch"><span class="rk" style="background:${col}">${o.rank}</span><span class="nm">${o.name}</span></div>
+    const lock=hid?' <span style="font-size:11px;color:#8a8270">🔒 위치 보호</span>':'';
+    const abadge= allMode?`<span class="ab" style="background:${ar.colorHex}">${ar.short}</span>`:'';
+    c.innerHTML=`<div class="ch"><span class="rk" style="background:${col}">${o.rank}</span><span class="nm">${o.name}</span>${abadge}</div>
       <div class="rg">${o.region}${lock}</div><div class="ct">${o.ctype}</div><div class="cyc">⟳ ${o.cycle}</div>`;
-    c.onclick=()=>{ if(!o.coordHidden && o.lat!=null){ map.flyTo([o.lat,o.lng],12,{duration:.8}); } openDetail(o.rank); };
+    c.onclick=()=>{ if(!hid){ map.flyTo([o.lat,o.lng],12,{duration:.8}); } openDetail(o._area,o.rank); };
     cb.appendChild(c);
   });
 }
 
-function openDetail(rank){
-  const o=MON.find(x=>x.rank===rank); if(!o)return;
+function openDetail(areaId,rank){
+  const a=areaById(areaId); const o=a.data.find(x=>x.rank===rank); if(!o)return;
+  const hid=isHidden(o);
+  const at=document.getElementById('dArea'); at.textContent=a.icon+' '+a.short; at.style.background=a.colorHex;
   document.getElementById('dUrg').textContent=URG[o.urg].t;
   document.getElementById('dUrg').style.background=urgColor(o.urg);
   document.getElementById('dName').textContent=o.rank+'. '+o.name;
   document.getElementById('dRegion').textContent='📍 '+o.region;
+  const coordHtml = hid
+    ? `<div class="warn" style="background:#f2efe4;border-color:#dcd6c6;color:#5e7077">🔒 비공개(위치 보호) — 도굴·무단진입 방지를 위해 정확 좌표·진입로를 표기하지 않습니다. 권역: ${o.region}</div>`
+    : `<dl class="meta"><dt>위도</dt><dd>${o.lat}</dd><dt>경도</dt><dd>${o.lng}</dd></dl>`;
   document.getElementById('dBody').innerHTML=`
     <div class="sec"><div class="lab">변화 유형</div><p>${o.ctype}</p></div>
     <div class="sec"><div class="lab">변화 근거 — 정량/관측 이력</div><ul class="qbox">${o.q.map(x=>`<li>${x}</li>`).join('')}</ul></div>
     <div class="sec"><div class="lab">변화 근거 — 정성</div><p>${o.qual}</p></div>
-    <div class="sec"><div class="lab">소관 기관</div><div class="agency">${o.agency.map(a=>`<span>${a}</span>`).join('')}</div></div>
-    <div class="sec"><div class="lab">3D 기록 명분 (어필 포인트)</div><ul>${o.appeal.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="sec"><div class="lab">소관 기관</div><div class="agency">${o.agency.map(x=>`<span>${x}</span>`).join('')}</div></div>
+    <div class="sec"><div class="lab">3D 기록 명분 (보존·가상개방·학술)</div><ul>${o.appeal.map(x=>`<li>${x}</li>`).join('')}</ul></div>
     <div class="sec"><div class="lab">권장 모니터링 주기</div><p style="color:var(--accent)">⟳ ${o.cycle}</p></div>
     <div class="sec"><div class="lab">3D 촬영·접근 제약</div><div class="warn">${o.access.replace(/★/g,'<b>⚠ </b>')}</div></div>
-    <div class="sec"><div class="lab">좌표 (EPSG:4326)</div>${o.coordHidden?'<div class="warn" style="background:#f2efe4;border-color:#dcd6c6;color:#5e7077">🔒 비공개(위치 보호) — 도굴·무단진입 방지를 위해 정확 좌표·진입로를 표기하지 않습니다. 권역: '+o.region+'</div>':`<dl class="meta"><dt>위도</dt><dd>${o.lat}</dd><dt>경도</dt><dd>${o.lng}</dd></dl>`}</div>
+    <div class="sec"><div class="lab">좌표 (EPSG:4326)</div>${coordHtml}</div>
     <div class="srcline">출처: ${o.src}<br>※ 관계 기관 제안 근거용 외부 공개 자료. 드론 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법·문화재보호법).</div>`;
   document.getElementById('detail').classList.add('open');
 }
@@ -369,28 +705,33 @@ function closeDetail(){document.getElementById('detail').classList.remove('open'
 
 function openTables(){
   const w=document.getElementById('tbwrap');
+  const scope = allMode ? [].concat(...AREAS.map(a=>a.data.map(o=>Object.assign({_area:a.id},o)))) 
+                        : areaById(curArea).data.map(o=>Object.assign({_area:curArea},o));
+  // 표A: 소관 기관별 집계
   const agMap={};
-  MON.forEach(o=>o.agency.forEach(a=>{
+  scope.forEach(o=>o.agency.forEach(a=>{
     const key=a.replace(/\(.*?\)/g,'').trim();
     (agMap[key]=agMap[key]||[]).push(o);
   }));
-  let tA='<table><tr><th>소관 기관</th><th>건수</th><th>대상지 (시급성 순)</th></tr>';
+  let tA='<table><tr><th>소관 기관</th><th>건수</th><th>대상지 (영역·시급성 순)</th></tr>';
   Object.entries(agMap).sort((a,b)=>b[1].length-a[1].length).forEach(([ag,arr])=>{
-    const names=arr.sort((x,y)=>x.rank-y.rank).map(o=>`${o.rank}. ${o.name}`).join('<br>');
+    const names=arr.sort((x,y)=>(x._area-y._area)||(x.rank-y.rank)).map(o=>`${areaById(o._area).icon}${o.rank}. ${o.name}`).join('<br>');
     tA+=`<tr><td><b>${ag}</b></td><td>${arr.length}건</td><td>${names}</td></tr>`;
   });
   tA+='</table>';
-  let tB='<table><tr><th>순위</th><th>대상 지형</th><th>시급성 근거</th><th>권장 주기</th></tr>';
-  MON.slice().sort((a,b)=>a.rank-b.rank).forEach(o=>{
-    const lk=o.coordHidden?' 🔒':'';
-    tB+=`<tr><td><span class="ub" style="background:${urgColor(o.urg)}">${o.rank}</span></td><td><b>${o.name}${lk}</b><br><span style="color:#8a8270;font-size:11px">${o.region}</span></td><td>${o.q[0]}</td><td style="color:#0e5e8a">${o.cycle}</td></tr>`;
+  // 표B: 시급성 우선순위
+  let tB='<table><tr><th>영역</th><th>순위</th><th>대상</th><th>시급성 근거</th><th>권장 주기</th></tr>';
+  scope.sort((a,b)=>(a.urg-b.urg)||(a._area-b._area)||(a.rank-b.rank)).forEach(o=>{
+    const ar=areaById(o._area), lk=isHidden(o)?' 🔒':'';
+    tB+=`<tr><td><span class="ub" style="background:${ar.colorHex}">${ar.short}</span></td><td><span class="ub" style="background:${urgColor(o.urg)}">${o.rank}</span></td><td><b>${o.name}${lk}</b><br><span style="color:#8a8270;font-size:11px">${o.region}</span></td><td>${o.q[0]}</td><td style="color:#0e5e8a">${o.cycle}</td></tr>`;
   });
   tB+='</table>';
+  const scopeLabel = allMode ? '전체(영역1·2·3, 31곳)' : `${areaById(curArea).icon} ${areaById(curArea).name}`;
   w.innerHTML=`
-    <h2>표 A — 소관 기관별 3D 아카이빙 책임 대상 동굴</h2>
-    <div class="desc">국가지정 유산 여부·토지 소유권(사유지)에 따라 복수 기관 협력·권한이 충돌 — 협의체 구성 선행 필요. 복수 기관 공유 동굴은 중복 기재(공동 용역·매칭 펀딩 근거).</div>${tA}
-    <h2>표 B — 훼손 시급성 및 3D 스캔 우선순위</h2>
-    <div class="desc">훼손 진행성·위험 임박성·학술 가치 종합. 예산 우선순위 배정 근거. 🔒 = 비공개(위치 보호) 동굴.</div>${tB}
+    <h2>표 A — 소관 기관별 3D 아카이빙 책임 대상 [${scopeLabel}]</h2>
+    <div class="desc">예산 편성 권한 기관별 발췌·제출용 분류. 복수 기관 공유 대상은 중복 기재(공동 용역·매칭 펀딩 근거). 협의체 구성 선행 필요.</div>${tA}
+    <h2>표 B — 시급성 우선순위</h2>
+    <div class="desc">훼손·침수·붕괴 진행성과 위험 임박성 종합. 예산 우선순위 배정 근거. 🔒 = 비공개(위치 보호) 동굴.</div>${tB}
     <div style="height:40px"></div>`;
   document.getElementById('tables').classList.remove('hidden');
 }
