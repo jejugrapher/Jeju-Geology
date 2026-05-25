@@ -1,129 +1,122 @@
 <!DOCTYPE html>
 <!--
   제주 시계열 3D 모니터링 지도 | JEJU MONITOR — 영역1: 자연 변화·붕괴 지형
-  버전: v1
+  버전: v2 (라이트 테마)
   작성일: 2026.05.25
-  프로젝트: JEJU MONITOR (기존 JEJUGRAPHER 운동/촬영 지도와 별개 신규 프로젝트)
-  영역: 1 / 5 (자연 변화·붕괴 지형)
-  데이터: 9곳 (시급성 최상3·상2·중2·하2). 좌표 Google Places 실측(미상은 대표점 표기).
-  목적: 제주유산센터·국가유산청·산림청·도로공사·문화재청·제주도청·4·3 단체·관광공사 등에
-        "변화·소실 진행 지형을 드론/LiDAR/Gaussian Splatting으로 주기 3D 기록·아카이빙해야 한다"
-        제안하기 위한 근거 자료. 변화 정량근거+소관기관+3D명분+권장주기 11필드.
-  좌표계: EPSG:4326
-  ※ 각 드론 정보엔 "비행 전 드론원스톱 등 별도 승인 확인 필수(항공안전법)" 명시 — 법적 안전장치.
+  프로젝트: JEJU MONITOR (기존 JEJUGRAPHER 지도와 별개 신규 프로젝트)
+  영역: 1 / 5 (자연 변화·붕괴 지형). 화구벽 붕괴·해식애 후퇴·사구 침식·지표 훼손.
+  데이터: 9곳 (시급성 최상3·상2·중2·하2). 좌표 Google Places 실측(미상은 대표점).
+  테마: 밝은 종이색 배경(라이트 테마) — 기존 JEJUGRAPHER 지도와 일관. v1(다크)에서 라이트로 변경.
+  ※ 각 드론 정보엔 "비행 전 드론원스톱 등 별도 승인 확인 필수(항공안전법)" 명시.
 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JEJU MONITOR — 자연 변화·붕괴 지형 시계열 3D 모니터링</title>
+<title>JEJU MONITOR — 자연 변화·붕괴 지형</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Black+Han+Sans&display=swap');
   :root{
-    --bg:#0e1418; --panel:#151e24; --panel2:#1c2830; --ink:#e8eef0; --ink2:#9fb2b8;
-    --line:#2a3a42; --acc:#ff5436; --acc2:#ffb02e;
-    --u1:#e6332a; --u2:#f0782e; --u3:#e0b020; --u4:#5aa9a0;  /* 시급성 색상 */
-    --mono:#7fd4c8;
+    --bg:#f4f1e8; --panel:#ffffff; --panel2:#f7f4ec; --ink:#1d3038; --ink2:#5e7077;
+    --line:#dcd6c6; --sea:#1a7a8c; --sea-l:#2bb0c4; --accent:#0e5e8a;
+    --u1:#d2342a; --u2:#e07a1f; --u3:#d6a318; --u4:#3a9b8f;  /* 침수 시급성 */
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
-  body{font-family:'Gowun Dodum',sans-serif;overflow:hidden;background:var(--bg);color:var(--ink);}
+  body{font-family:'Gowun Batang',serif;overflow:hidden;background:var(--bg);color:var(--ink);}
   .hidden{display:none!important;}
 
-  /* ===== 랜딩 ===== */
+  /* 랜딩 */
   #landing{position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;align-items:center;justify-content:center;
     overflow-y:auto;-webkit-overflow-scrolling:touch;padding:28px;
-    background:radial-gradient(circle at 80% 10%,rgba(255,84,54,.16),transparent 55%),radial-gradient(circle at 12% 92%,rgba(127,212,200,.12),transparent 55%),#0e1418;}
-  .brand{font-family:'Black Han Sans',sans-serif;font-size:13px;letter-spacing:4px;color:var(--mono);margin-bottom:8px;}
-  #landing h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(28px,6vw,56px);line-height:1.08;text-align:center;
-    background:linear-gradient(92deg,#fff,#ffd0c4 60%,#ffb02e);-webkit-background-clip:text;background-clip:text;color:transparent;}
-  #landing .sub{color:var(--ink2);font-size:15px;margin-top:14px;text-align:center;max-width:620px;line-height:1.6;}
-  .startbtn{margin-top:34px;font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:1px;color:#0e1418;
-    background:linear-gradient(92deg,var(--acc),var(--acc2));border:none;border-radius:40px;padding:15px 42px;cursor:pointer;transition:.2s;box-shadow:0 8px 30px rgba(255,84,54,.35);}
-  .startbtn:hover{transform:translateY(-3px);box-shadow:0 12px 38px rgba(255,84,54,.5);}
-  .ldstats{display:flex;gap:18px;margin-top:30px;flex-wrap:wrap;justify-content:center;}
-  .ldstat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 20px;min-width:120px;text-align:center;}
+    background:radial-gradient(circle at 80% 8%,rgba(43,176,196,.20),transparent 55%),radial-gradient(circle at 10% 92%,rgba(14,94,138,.12),transparent 55%),#f4f1e8;}
+  .brand{font-family:'Black Han Sans',sans-serif;font-size:13px;letter-spacing:4px;color:var(--sea);margin-bottom:8px;}
+  #landing h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(28px,6vw,54px);line-height:1.1;text-align:center;color:#16323b;}
+  #landing h1 em{font-style:normal;color:var(--accent);}
+  #landing .sub{color:#4a5e66;font-size:15px;margin-top:14px;text-align:center;max-width:640px;line-height:1.65;}
+  #landing .sub b{color:var(--accent);}
+  .startbtn{margin-top:32px;font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:1px;color:#fff;
+    background:linear-gradient(92deg,var(--sea),var(--sea-l));border:none;border-radius:40px;padding:15px 42px;cursor:pointer;transition:.2s;box-shadow:0 8px 26px rgba(26,122,140,.3);}
+  .startbtn:hover{transform:translateY(-3px);box-shadow:0 12px 34px rgba(26,122,140,.42);}
+  .ldstats{display:flex;gap:16px;margin-top:30px;flex-wrap:wrap;justify-content:center;}
+  .ldstat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 20px;min-width:118px;text-align:center;box-shadow:0 3px 12px rgba(26,122,140,.06);}
   .ldstat b{font-family:'Black Han Sans',sans-serif;font-size:26px;display:block;}
   .ldstat span{font-size:12px;color:var(--ink2);}
-  #landing .foot{margin-top:30px;font-size:11px;color:#5f727a;text-align:center;line-height:1.7;max-width:680px;}
+  #landing .foot{margin-top:28px;font-size:11px;color:#8a8270;text-align:center;line-height:1.7;max-width:680px;}
 
-  /* ===== 앱 ===== */
+  /* 앱 */
   #app{height:100%;display:flex;flex-direction:column;}
-  .topbar{display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--panel);}
-  .topbar .home{cursor:pointer;font-family:'Black Han Sans',sans-serif;color:var(--mono);font-size:15px;border:none;background:none;}
+  .topbar{display:flex;align-items:center;gap:13px;padding:11px 20px;border-bottom:2px solid var(--sea);flex-wrap:wrap;background:#fff;}
+  .topbar .home{cursor:pointer;font-family:'Black Han Sans',sans-serif;color:var(--sea);font-size:15px;border:none;background:none;}
   .topbar .ttl{font-family:'Black Han Sans',sans-serif;font-size:15px;color:var(--ink);}
-  .topbar .ttl small{font-family:'Gowun Dodum';color:var(--ink2);font-size:12px;display:block;font-weight:400;}
+  .topbar .ttl small{font-family:'Gowun Batang';color:var(--ink2);font-size:12px;display:block;font-weight:400;}
   .topbar .sp{flex:1;}
-  .tbtn{font-family:'Gowun Dodum';font-size:12.5px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer;transition:.15s;}
-  .tbtn:hover{border-color:var(--mono);color:var(--mono);}
-  .tbtn.on{background:var(--mono);color:#0e1418;border-color:var(--mono);font-weight:700;}
+  .tbtn{font-family:'Gowun Batang';font-size:12.5px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer;transition:.15s;}
+  .tbtn:hover{border-color:var(--sea);color:var(--sea);}
 
   .main{flex:1;display:flex;min-height:0;}
-  #map{flex:1;background:#0a1013;}
-  .side{width:300px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;}
-  .side h3{font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--mono);padding:14px 16px 8px;letter-spacing:1px;}
+  #map{flex:1;background:#dfeef0;}
+  .side{width:300px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;}
+  .side h3{font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--sea);padding:14px 16px 8px;letter-spacing:1px;}
   .filt{padding:0 12px 10px;}
   .frow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:.12s;font-size:13px;}
   .frow:hover{background:var(--panel2);}
   .frow .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
   .frow .cnt{margin-left:auto;font-size:11px;color:var(--ink2);}
-  .frow.off{opacity:.32;}
+  .frow.off{opacity:.3;}
   .legend{padding:10px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--ink2);line-height:1.7;}
   .legend b{color:var(--ink);}
 
-  /* 카드 리스트 */
   .cards{padding:6px 12px 20px;}
-  .card{background:var(--panel2);border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.15s;}
-  .card:hover{border-color:var(--mono);transform:translateX(2px);}
+  .card{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.15s;box-shadow:0 2px 8px rgba(26,122,140,.05);}
+  .card:hover{border-color:var(--sea);transform:translateX(2px);box-shadow:0 4px 14px rgba(26,122,140,.12);}
   .card .ch{display:flex;align-items:baseline;gap:7px;}
-  .card .rk{font-family:'Black Han Sans',sans-serif;font-size:12px;color:#0e1418;background:var(--ink2);border-radius:5px;padding:1px 6px;flex-shrink:0;}
+  .card .rk{font-family:'Black Han Sans',sans-serif;font-size:12px;color:#fff;border-radius:5px;padding:1px 6px;flex-shrink:0;}
   .card .nm{font-size:13.5px;font-weight:700;line-height:1.3;}
   .card .rg{font-size:11px;color:var(--ink2);margin-top:5px;}
-  .card .ct{font-size:11.5px;color:#c4d2d6;margin-top:6px;line-height:1.45;}
-  .card .cyc{font-size:11px;color:var(--acc2);margin-top:6px;}
+  .card .ct{font-size:11.5px;color:#3a4d54;margin-top:6px;line-height:1.45;}
+  .card .cyc{font-size:11px;color:var(--accent);margin-top:6px;}
 
-  /* detail 패널 */
-  #detail{position:fixed;top:0;right:0;width:min(440px,94vw);height:100%;background:var(--panel);border-left:1px solid var(--line);z-index:1100;
-    transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.5);}
+  #detail{position:fixed;top:0;right:0;width:min(440px,94vw);height:100%;background:#fff;border-left:1px solid var(--line);z-index:1100;
+    transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.15);}
   #detail.open{transform:translateX(0);}
-  .dhead{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2;}
-  .dhead .urg{display:inline-block;font-family:'Black Han Sans',sans-serif;font-size:11px;padding:3px 11px;border-radius:20px;color:#0e1418;margin-bottom:9px;}
-  .dhead h2{font-family:'Black Han Sans',sans-serif;font-size:21px;line-height:1.2;}
+  .dhead{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2;}
+  .dhead .urg{display:inline-block;font-family:'Black Han Sans',sans-serif;font-size:11px;padding:3px 11px;border-radius:20px;color:#fff;margin-bottom:9px;}
+  .dhead h2{font-family:'Black Han Sans',sans-serif;font-size:21px;line-height:1.22;color:#16323b;}
   .dhead .rg{font-size:12.5px;color:var(--ink2);margin-top:7px;}
   .dclose{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--ink2);font-size:26px;cursor:pointer;line-height:1;}
   .dbody{padding:18px 22px 60px;}
   .sec{margin-bottom:18px;}
-  .sec .lab{font-family:'Black Han Sans',sans-serif;font-size:11px;letter-spacing:1px;color:var(--mono);margin-bottom:7px;text-transform:uppercase;}
-  .sec p{font-size:13px;line-height:1.62;color:#d4dee1;}
+  .sec .lab{font-family:'Black Han Sans',sans-serif;font-size:11px;letter-spacing:1px;color:var(--sea);margin-bottom:7px;}
+  .sec p{font-size:13px;line-height:1.62;color:#2e4148;}
   .sec ul{list-style:none;}
-  .sec li{font-size:12.5px;line-height:1.55;color:#d4dee1;padding-left:15px;position:relative;margin-bottom:7px;}
-  .sec li::before{content:"▸";position:absolute;left:0;color:var(--acc);}
+  .sec li{font-size:12.5px;line-height:1.55;color:#2e4148;padding-left:15px;position:relative;margin-bottom:7px;}
+  .sec li::before{content:"\25B8";position:absolute;left:0;color:var(--sea);}
   .qbox{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;}
-  .qbox li::before{content:"▪";color:var(--acc2);}
+  .qbox li::before{content:"\25AA";color:var(--accent);}
   .agency{display:flex;flex-wrap:wrap;gap:6px;}
-  .agency span{font-size:11.5px;background:#243842;color:var(--mono);border:1px solid #2f4a54;border-radius:6px;padding:4px 9px;}
-  .warn{background:rgba(230,51,42,.1);border:1px solid rgba(230,51,42,.4);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.55;color:#ffc4be;}
-  .warn b{color:#ff8a80;}
+  .agency span{font-size:11.5px;background:#e3f1f3;color:var(--sea);border:1px solid #bfe0e5;border-radius:6px;padding:4px 9px;}
+  .warn{background:#fdeeec;border:1px solid #f3c4bd;border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.55;color:#9a3328;}
+  .warn b{color:#d2342a;}
   .meta{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12px;}
   .meta dt{color:var(--ink2);}
-  .meta dd{color:#d4dee1;}
-  .srcline{font-size:11px;color:#7f9298;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);line-height:1.5;}
+  .meta dd{color:#2e4148;}
+  .srcline{font-size:11px;color:#8a8270;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);line-height:1.5;}
 
-  /* 표 패널 (표A/표B) */
-  #tables{position:fixed;inset:0;z-index:1150;background:rgba(8,12,15,.96);overflow-y:auto;padding:30px 20px 60px;}
-  .tbwrap{max-width:920px;margin:0 auto;}
-  .tbclose{position:fixed;top:18px;right:22px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:14px;border-radius:8px;padding:8px 14px;cursor:pointer;z-index:2;}
-  #tables h2{font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--mono);margin:24px 0 6px;}
+  #tables{position:fixed;inset:0;z-index:1150;background:rgba(244,241,232,.985);overflow-y:auto;padding:30px 20px 60px;}
+  .tbwrap{max-width:940px;margin:0 auto;}
+  .tbclose{position:fixed;top:18px;right:22px;background:#fff;border:1px solid var(--line);color:var(--ink);font-size:14px;border-radius:8px;padding:8px 14px;cursor:pointer;z-index:2;box-shadow:0 3px 12px rgba(0,0,0,.1);}
+  #tables h2{font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--sea);margin:24px 0 6px;}
   #tables .desc{font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6;}
-  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12.5px;margin-bottom:10px;}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12.5px;margin-bottom:10px;}
   th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5;}
-  th{background:var(--panel2);font-family:'Black Han Sans',sans-serif;font-size:12px;color:var(--mono);letter-spacing:.5px;}
-  td .ub{display:inline-block;font-size:10.5px;font-family:'Black Han Sans',sans-serif;color:#0e1418;border-radius:4px;padding:1px 6px;}
+  th{background:var(--panel2);font-family:'Black Han Sans',sans-serif;font-size:12px;color:var(--sea);letter-spacing:.5px;}
+  td .ub{display:inline-block;font-size:10.5px;font-family:'Black Han Sans',sans-serif;color:#fff;border-radius:4px;padding:1px 6px;}
 
   @media(max-width:780px){
-    .side{position:fixed;left:0;top:53px;bottom:0;z-index:900;transform:translateX(-100%);transition:transform .3s;width:84vw;max-width:320px;}
+    .side{position:fixed;left:0;top:55px;bottom:0;z-index:900;transform:translateX(-100%);transition:transform .3s;width:84vw;max-width:320px;}
     .side.open{transform:translateX(0);}
     .topbar .ttl small{display:none;}
   }
@@ -131,27 +124,25 @@
 </head>
 <body>
 
-<!-- 랜딩 -->
 <div id="landing">
   <div class="brand">JEJU MONITOR · AREA 1 / 5</div>
-  <h1>사라지기 전에,<br>기록한다</h1>
-  <p class="sub">제주에서 지금 이 순간에도 무너지고·깎이고·잠기고 있는 자연 지형을 시계열 3D로 기록·관찰하기 위한 지도입니다. 각 지점은 <b style="color:#ffd0c4">변화의 정량 근거 · 소관 기관 · 3D 기록 명분 · 권장 모니터링 주기</b>와 함께 정리되어, 관계 기관 제안 자료로 그대로 활용할 수 있습니다.</p>
+  <h1>사라지기 전에,<br><em>기록한다</em></h1>
+  <p class="sub">제주에서 지금 이 순간에도 무너지고·깎이고 있는 자연 지형을 시계열 3D로 기록·관찰하기 위한 지도입니다. 한라산 화구벽 붕괴, 해식애 후퇴, 사구 침식, 오름 지표 훼손까지 — 각 지점을 <b>변화 정량 근거 · 소관 기관 · 3D 기록 명분 · 권장 주기</b>와 함께 정리해, 관계 기관 제안 자료로 그대로 활용할 수 있습니다.</p>
   <div class="ldstats">
-    <div class="ldstat"><b style="color:#ff5436">9</b><span>최우선 대상지</span></div>
-    <div class="ldstat"><b style="color:#e6332a">3</b><span>시급성 최상</span></div>
-    <div class="ldstat"><b style="color:#7fd4c8">6</b><span>소관 기관</span></div>
+    <div class="ldstat"><b style="color:#d2342a">9</b><span>최우선 대상지</span></div>
+    <div class="ldstat"><b style="color:#d2342a">3</b><span>시급성 최상</span></div>
+    <div class="ldstat"><b style="color:#1a7a8c">6</b><span>소관 기관</span></div>
   </div>
   <button class="startbtn" onclick="enter()">지도 열기 →</button>
-  <div class="foot">영역 1 / 5 · 자연 변화·붕괴 지형 — 화구벽 붕괴·해식애 후퇴·사구 침식·지표 훼손 등. 변화 진행 근거(보도·관측·통제 이력)가 확인된 대상만 수록. 정량 데이터 미확보분은 명시 표기. 좌표 Google Places 실측(미상은 대표점). 외부 공개용 자료.</div>
+  <div class="foot">영역 1 / 5 · 자연 변화·붕괴 지형 — 화구벽 붕괴·해식애 후퇴·사구 침식·지표 훼손 등. 변화 진행 근거(보도·관측·통제 이력)가 확인된 대상만 수록. 정량 미확보분은 명시. 좌표 Google Places 실측(미상은 대표점). 외부 공개용 자료.</div>
 </div>
 
-<!-- 앱 -->
 <div id="app" class="hidden">
   <div class="topbar">
     <button class="home" onclick="goHome()">◂ JEJU MONITOR</button>
     <div class="ttl">자연 변화·붕괴 지형<small>영역 1 / 5 · 시계열 3D 모니터링 후보 9곳</small></div>
     <div class="sp"></div>
-    <button class="tbtn" id="mobFilt" onclick="toggleSide()">☰ 목록</button>
+    <button class="tbtn" onclick="toggleSide()">☰ 목록</button>
     <button class="tbtn" onclick="openTables()">📊 기관별·시급성 표</button>
     <button class="tbtn" onclick="locateMe()">📍 내 위치</button>
   </div>
@@ -160,7 +151,7 @@
       <h3>시급성 필터</h3>
       <div class="filt" id="filt"></div>
       <div class="legend">
-        <b>시급성 등급</b> — 붕괴 현재성·심각성·인명 노출도 종합.<br>
+        <b>시급성 등급</b> — 침수 진행성·소실 임박도·인명/자산 노출도 종합.<br>
         ● 최상: 즉시 / ● 상: 1년 내 / ● 중: 응급통제 중 / ● 하: 점진적 변화
       </div>
       <h3>대상지 (시급성 순)</h3>
@@ -170,7 +161,6 @@
   </div>
 </div>
 
-<!-- detail -->
 <div id="detail">
   <div class="dhead">
     <button class="dclose" onclick="closeDetail()">×</button>
@@ -181,7 +171,6 @@
   <div class="dbody" id="dBody"></div>
 </div>
 
-<!-- 표 패널 -->
 <div id="tables" class="hidden">
   <button class="tbclose" onclick="closeTables()">× 닫기</button>
   <div class="tbwrap" id="tbwrap"></div>
@@ -285,10 +274,8 @@ const MON=[
 ];
 
 
-// 시급성 메타
-const URG={1:{c:'var(--u1)',t:'시급성 최상'},2:{c:'var(--u2)',t:'시급성 상'},3:{c:'var(--u3)',t:'시급성 중'},4:{c:'var(--u4)',t:'시급성 하'}};
-const urgColor=u=>({1:'#e6332a',2:'#f0782e',3:'#e0b020',4:'#5aa9a0'}[u]);
-
+const URG={1:{t:'시급성 최상'},2:{t:'시급성 상'},3:{t:'시급성 중'},4:{t:'시급성 하'}};
+const urgColor=u=>({1:'#d2342a',2:'#e07a1f',3:'#d6a318',4:'#3a9b8f'}[u]);
 let map, markers=[], activeUrg={1:true,2:true,3:true,4:true};
 
 function enter(){
@@ -306,7 +293,7 @@ function toggleSide(){document.getElementById('side').classList.toggle('open');}
 
 function initMap(){
   map=L.map('map',{zoomControl:true}).setView([33.36,126.53],10);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
     attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19,subdomains:'abcd'}).addTo(map);
   buildFilters(); render();
 }
@@ -325,16 +312,14 @@ function buildFilters(){
 function render(){
   markers.forEach(m=>map.removeLayer(m)); markers=[];
   const list=MON.filter(o=>activeUrg[o.urg]).sort((a,b)=>a.rank-b.rank);
-  // 마커
   list.forEach(o=>{
     const col=urgColor(o.urg);
-    const ic=L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${col};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-family:sans-serif;font-weight:700;font-size:12px;color:#fff;">${o.rank}</span></div>`,iconSize:[26,26],iconAnchor:[13,26]});
+    const ic=L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${col};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-family:sans-serif;font-weight:700;font-size:12px;color:#fff;">${o.rank}</span></div>`,iconSize:[26,26],iconAnchor:[13,26]});
     const m=L.marker([o.lat,o.lng],{icon:ic}).addTo(map);
-    m.bindPopup(`<b style="font-size:13px">${o.rank}. ${o.name}</b><br><span style="color:#888;font-size:11px">${o.region}</span><br><span style="font-size:12px">${o.ctype}</span><br><a href="#" onclick="openDetail(${o.rank});return false;" style="color:#1a6b6b;font-size:12px">상세 보기 →</a>`);
+    m.bindPopup(`<b style="font-size:13px">${o.rank}. ${o.name}</b><br><span style="color:#888;font-size:11px">${o.region}</span><br><span style="font-size:12px">${o.ctype}</span><br><a href="#" onclick="openDetail(${o.rank});return false;" style="color:#1a7a8c;font-size:12px">상세 보기 →</a>`);
     m.on('click',()=>m.openPopup());
     markers.push(m);
   });
-  // 카드
   const cb=document.getElementById('cards'); cb.innerHTML='';
   list.forEach(o=>{
     const col=urgColor(o.urg);
@@ -352,28 +337,25 @@ function openDetail(rank){
   document.getElementById('dUrg').style.background=urgColor(o.urg);
   document.getElementById('dName').textContent=o.rank+'. '+o.name;
   document.getElementById('dRegion').textContent='📍 '+o.region;
-  const b=document.getElementById('dBody');
-  b.innerHTML=`
+  document.getElementById('dBody').innerHTML=`
     <div class="sec"><div class="lab">변화 유형</div><p>${o.ctype}</p></div>
     <div class="sec"><div class="lab">변화 근거 — 정량/관측 이력</div><ul class="qbox">${o.q.map(x=>`<li>${x}</li>`).join('')}</ul></div>
     <div class="sec"><div class="lab">변화 근거 — 정성</div><p>${o.qual}</p></div>
     <div class="sec"><div class="lab">소관 기관</div><div class="agency">${o.agency.map(a=>`<span>${a}</span>`).join('')}</div></div>
     <div class="sec"><div class="lab">3D 기록 명분 (어필 포인트)</div><ul>${o.appeal.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-    <div class="sec"><div class="lab">권장 모니터링 주기</div><p style="color:var(--acc2)">⟳ ${o.cycle}</p></div>
+    <div class="sec"><div class="lab">권장 모니터링 주기</div><p style="color:var(--accent)">⟳ ${o.cycle}</p></div>
     <div class="sec"><div class="lab">3D 촬영·접근 제약</div><div class="warn">${o.access.replace(/★/g,'<b>⚠ </b>')}</div></div>
     <div class="sec"><div class="lab">좌표 (EPSG:4326)</div><dl class="meta"><dt>위도</dt><dd>${o.lat}</dd><dt>경도</dt><dd>${o.lng}</dd></dl></div>
-    <div class="srcline">출처: ${o.src}<br>※ 본 자료는 관계 기관 제안 근거용 외부 공개 자료입니다. 드론 비행·촬영 전 드론원스톱 등 공식 채널로 별도 승인 확인이 필수입니다(항공안전법·문화재보호법·자연공원법).</div>`;
+    <div class="srcline">출처: ${o.src}<br>※ 관계 기관 제안 근거용 외부 공개 자료. 드론 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법·문화재보호법).</div>`;
   document.getElementById('detail').classList.add('open');
 }
 function closeDetail(){document.getElementById('detail').classList.remove('open');}
 
-// ===== 표A / 표B =====
 function openTables(){
   const w=document.getElementById('tbwrap');
-  // 표A: 기관별 집계
   const agMap={};
   MON.forEach(o=>o.agency.forEach(a=>{
-    const key=a.replace(/\(.*?\)/g,'').replace(/(추정)/,'').trim();
+    const key=a.replace(/\(.*?\)/g,'').trim();
     (agMap[key]=agMap[key]||[]).push(o);
   }));
   let tA='<table><tr><th>소관 기관</th><th>건수</th><th>대상지 (시급성 순)</th></tr>';
@@ -382,30 +364,28 @@ function openTables(){
     tA+=`<tr><td><b>${ag}</b></td><td>${arr.length}건</td><td>${names}</td></tr>`;
   });
   tA+='</table>';
-  // 표B: 시급성
   let tB='<table><tr><th>순위</th><th>대상 지형</th><th>시급성 근거</th><th>권장 주기</th></tr>';
   MON.slice().sort((a,b)=>a.rank-b.rank).forEach(o=>{
-    tB+=`<tr><td><span class="ub" style="background:${urgColor(o.urg)}">${o.rank}</span></td><td><b>${o.name}</b><br><span style="color:#7f9298;font-size:11px">${o.region}</span></td><td>${o.q[0]}</td><td style="color:#ffb02e">${o.cycle}</td></tr>`;
+    tB+=`<tr><td><span class="ub" style="background:${urgColor(o.urg)}">${o.rank}</span></td><td><b>${o.name}</b><br><span style="color:#8a8270;font-size:11px">${o.region}</span></td><td>${o.q[0]}</td><td style="color:#0e5e8a">${o.cycle}</td></tr>`;
   });
   tB+='</table>';
   w.innerHTML=`
-    <h2>표 A — 소관 기관별 매칭</h2>
+    <h2>표 A — 소관 기관별 매칭 (매칭 펀딩 근거)</h2>
     <div class="desc">예산 편성 권한 기관별로 제안서를 발췌·제출하기 위한 분류. 복수 기관 공유 지형은 중복 기재(공동 용역·매칭 펀딩 근거).</div>${tA}
-    <h2>표 B — 변화 시급성 우선순위</h2>
+    <h2>표 B — 침수 시급성 우선순위</h2>
     <div class="desc">붕괴 현재성·심각성·인명 노출도 종합. 예산 우선순위 배정 근거.</div>${tB}
     <div style="height:40px"></div>`;
   document.getElementById('tables').classList.remove('hidden');
 }
 function closeTables(){document.getElementById('tables').classList.add('hidden');}
 
-// ===== 내 위치 =====
 let meMarker;
 function locateMe(){
   if(!navigator.geolocation){alert('이 브라우저는 위치를 지원하지 않습니다.');return;}
   navigator.geolocation.getCurrentPosition(p=>{
     const ll=[p.coords.latitude,p.coords.longitude];
     if(meMarker)map.removeLayer(meMarker);
-    meMarker=L.circleMarker(ll,{radius:8,color:'#7fd4c8',fillColor:'#7fd4c8',fillOpacity:.9,weight:3}).addTo(map);
+    meMarker=L.circleMarker(ll,{radius:8,color:'#0e5e8a',fillColor:'#2bb0c4',fillOpacity:.9,weight:3}).addTo(map);
     map.flyTo(ll,12,{duration:.8});
   },()=>alert('위치를 가져올 수 없습니다. HTTPS 환경 + 위치 권한을 확인하세요.'),{enableHighAccuracy:true,timeout:8000});
 }
