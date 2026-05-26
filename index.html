@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <!--
   JEJU MONITOR — 제주 시계열 3D 모니터링 통합 지도
-  버전: integrated v4 (영역6 식생·생태 합류 — 6개 영역)
+  버전: integrated v5 (영역별 주력 장비조합·산출물 운용 계획 추가)
   작성일: 2026.05.25
   프로젝트: JEJU MONITOR (기존 JEJUGRAPHER 운동/촬영 지도와 별개 신규 프로젝트)
   구조: 단일 페이지 통합. 상단 영역 탭으로 전환 + "전체보기" 토글로 영역 동시 표시.
   수록: 영역1 자연 붕괴(9) + 영역2 해수면·침수(12) + 영역3 동굴(10) + 영역4 4·3·근현대(10) + 영역5 문화재·구조물(10) + 영역6 식생·생태(10) = 61곳.
         ★영역6은 Mavic 3 Multispectral(M3M) 멀티스펙트럼 드론의 NDVI·NDRE 식생지수 기반 — 영역1~5의 사진측량·LiDAR·SLAM과 다른 축.
+  ★각 영역에 주력 장비조합·산출물(운용 계획) 표시 추가(v5). 출처: 사용자 제공 장비·운용 기술 자료. 영역 단위 운용 계획이며 대상지별 세부는 현장 조건에 따라 조정.
   컨셉: 소실 전제의 수동적 프레이밍을 폐기하고 → 보호·가상 개방·학술/변화 기록(가치 창출)로 재정의.
         ① 아름다운 자연을 3D로 보존  ② 미공개 구간을 가상으로 누구나 만남  ③ 학술·보호 연구와 변화 추적 근거.
   ★위치 보호: 영역3 비공개 동굴(7) + 영역4 민감·미발굴·붕괴위험 현장(3) + 영역5 도난 위험 석상(1) + 영역6 멸종위기 희귀식물 자생지(1: 한란) = 12곳 — 도굴·무단진입·유족 고통·2차 훼손·도난·도채 방지 위해 좌표 비공개·핀 비표시(카드·표엔 표시).
@@ -86,6 +87,10 @@
   .side .ahead{padding:14px 16px 10px;border-bottom:1px solid var(--line);}
   .side .ahead .an{font-family:'Black Han Sans',sans-serif;font-size:16px;color:#16323b;}
   .side .ahead .ad{font-size:11.5px;color:var(--ink2);margin-top:5px;line-height:1.5;}
+  .gearbox{margin-top:10px;padding:10px 11px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;}
+  .gearbox .gl{font-family:'Black Han Sans',sans-serif;font-size:10.5px;letter-spacing:.5px;color:var(--sea);}
+  .gearbox .gtag{font-family:'Gowun Batang';font-size:9px;color:#fff;background:#8a8270;border-radius:5px;padding:1px 5px;margin-left:4px;letter-spacing:0;}
+  .gearbox .gv{font-size:11.5px;color:#2e4148;line-height:1.5;margin-top:3px;}
   .side h3{font-family:'Black Han Sans',sans-serif;font-size:13px;color:var(--sea);padding:13px 16px 7px;letter-spacing:1px;}
   .filt{padding:0 12px 10px;}
   .frow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:.12s;font-size:13px;}
@@ -833,26 +838,38 @@ const AREAS=[
  {id:1,name:"자연 변화·붕괴 지형",short:"자연·붕괴",icon:"⛰️",color:"var(--a1)",colorHex:"#b5524a",
   desc:"화구벽 붕괴·해식애 후퇴·사구 침식·오름 지표 훼손. 무너지고 깎이는 지형.",
   legend:"● 최상: 즉시 / ● 상: 1년 내 / ● 중: 응급통제 중 / ● 하: 점진적 변화",
+  gear:"M3E 정밀 항공 매핑 + Avata 360 (접근 불가 단애면 8K 근접 뷰)",
+  output:"초고해상도 3DGS 메쉬 + 8K VR 인터랙티브 투어 웹페이지",
   data:AREA1_DATA},
  {id:2,name:"해수면 상승·침수 위험 지형",short:"해수면·침수",icon:"🌊",color:"var(--a2)",colorHex:"#1a7a8c",
   desc:"만조·폭풍해일 침수, 해안 후퇴·염해로 잠기거나 사라질 저지대 인프라·유적·마을·습지.",
   legend:"● 최상: 상습 침수·대피 / ● 상: 소실 임박 / ● 중: 생태·인프라 / ● 하: 점진적",
+  gear:"M3E 광역 항공 매핑 + RTK 네트워크 정밀 좌표 보정",
+  output:"시계열 DEM/DSM 데이터 + 정량적 체적·붕괴 변화 리포트",
   data:AREA2_DATA},
  {id:3,name:"동굴·용암동굴",short:"동굴",icon:"🕳️",color:"var(--a3)",colorHex:"#7a5cab",
   desc:"천장 낙반·남조류 오염·개발 진동·뿌리 풍화·토사 매몰. 비공개 동굴은 위치 보호(핀 미표시).",
   legend:"● 최상: 극심(낙반·현안) / ● 상: 심각(개발·구조·조명) / ● 중: 경고(풍화·저심도) / ● 하: 주의(관리사각·응력·매몰)<br><span style='color:#8a8270'>🔒 비공개 동굴은 위치 보호로 지도 핀 미표시 — 카드/표에서 상세 확인.</span>",
+  gear:"Raven 도보 SLAM 매핑 + M3E·전문가 조명 (인간 미접근 수직 공동 비행)",
+  output:"지상-공중 병합 고정밀 E57/LAS 점군 + 언리얼 엔진 5 동굴 탐험 에셋",
   data:AREA3_DATA},
  {id:4,name:"4·3 및 근현대 역사 유산",short:"4·3·근현대",icon:"🕯️",color:"#6b7f4a",colorHex:"#6b7f4a",
   desc:"잃어버린 마을·피난 동굴·일제 진지동굴·학살터 등. 식생 매몰·해안 침식·낙반·방치로 소실 중. 민감·미발굴 현장은 위치 보호(핀 미표시).",
   legend:"● 극심: 붕괴·긴급조치 / ● 심각: 미발굴·밀봉·밀림화 / ● 경고: 풍화·개발압력 / ● 주의: 관리소홀·답압<br><span style='color:#8a8270'>🔒 민감·미발굴·붕괴위험 현장은 위치 보호로 지도 핀 미표시 — 카드/표 확인.</span>",
+  gear:"Raven 진지동굴·갱도 내부 SLAM + M3E (외부 식생투과·전체 지형)",
+  output:"내부 정밀 점군과 외부 지형이 심리스 결합된 하이브리드 3D 모델",
   data:AREA4_DATA},
  {id:5,name:"문화재·인공 구조물 노후·훼손",short:"문화재·구조물",icon:"🏛️",color:"#a8843a",colorHex:"#a8843a",
   desc:"읍성·돌하르방·초가·향교·도대불·방사탑 등 인공 구조물의 풍화·균열·기울어짐·부식·도난. 도난 위험 석상은 위치 보호(핀 미표시).",
   legend:"● 극심: 도난·연쇄 멸실 / ● 심각: 배부름·종균열·공동화 / ● 경고: 복원 결함·목재 부후 / ● 주의: 해풍 부식·철거 압력<br><span style='color:#8a8270'>🔒 도난 위험 비지정 석상은 위치 보호로 지도 핀 미표시 — 카드/표 확인.</span>",
+  gear:"Fox 3D 석상·국소 훼손부 초정밀 스캔 + Sony A1 고해상도 컬러 텍스처",
+  output:"0.1mm급 컬러 텍스처 베이킹 OBJ/STL 메쉬 에셋",
   data:AREA5_DATA},
  {id:6,name:"식생·생태 변화",short:"식생·생태",icon:"🌲",color:"var(--a6)",colorHex:"#3f8f4f",
   desc:"구상나무 고사·재선충·조릿대 잠식·곶자왈 건조화·습지 육화·농경 변화 등. Mavic 3 Multispectral 드론의 NDVI·NDRE 식생지수로 정량 분석. 희귀종 자생지는 위치 보호(핀 미표시).",
   legend:"● 극심: 집단 고사·재선충 / ● 심각: 잠식·습지 육화·노거수 쇠퇴 / ● 경고: 곶자왈 건조화·수관 울폐·농경 / ● 주의: 사구·천이<br><span style='color:#8a8270'>🔒 멸종위기 희귀식물 자생지는 도채 방지 위치 보호 — 카드/표 확인.</span>",
+  gear:"M3M 다중분광 센서 식생 분석 + RTK 정밀 보정",
+  output:"분기별 NDVI/NDRE 식생지수 GeoTIFF + 식생 고사율 추이 리포트",
   data:AREA6_DATA},
 ];
 
@@ -934,7 +951,7 @@ function buildAhead(){
     el.innerHTML=`<div class="an">전체보기 · 61곳</div><div class="ad">영역1~6 동시 표시. 마커 테두리 색 = 영역 구분. 영역 탭을 누르면 단일 영역 집중 보기로 돌아갑니다.</div>`;
   }else{
     const a=areaById(curArea);
-    el.innerHTML=`<div class="an">${a.icon} ${a.name}</div><div class="ad">영역 ${a.id} / 5 · ${a.desc}</div>`;
+    el.innerHTML=`<div class="an">${a.icon} ${a.name}</div><div class="ad">영역 ${a.id} / 6 · ${a.desc}</div>`+(a.gear?`<div class="gearbox"><div class="gl">주력 장비조합 <span class="gtag">운용 계획</span></div><div class="gv">🛠 ${a.gear}</div><div class="gl" style="margin-top:6px">산출물</div><div class="gv">📦 ${a.output}</div></div>`:'');
   }
 }
 
@@ -1007,6 +1024,7 @@ function openDetail(areaId,rank){
     <div class="sec"><div class="lab">권장 모니터링 주기</div><p style="color:var(--accent)">⟳ ${o.cycle}</p></div>
     <div class="sec"><div class="lab">3D 촬영·접근 제약</div><div class="warn">${o.access.replace(/★/g,'<b>⚠ </b>')}</div></div>
     <div class="sec"><div class="lab">좌표 (EPSG:4326)</div>${coordHtml}</div>
+    <div class="sec"><div class="lab">주력 장비조합 · 산출물 <span style="font-size:9px;color:#fff;background:#8a8270;border-radius:5px;padding:1px 6px;font-family:'Gowun Batang';letter-spacing:0">운용 계획</span></div><div class="qbox" style="background:#eef4f0;border-color:#cfe0d6"><div style="font-size:12.5px;color:#2e4148;line-height:1.55">🛠 <b>${a.gear}</b></div><div style="font-size:12.5px;color:#2e4148;line-height:1.55;margin-top:6px">📦 ${a.output}</div></div></div>
     <div class="srcline">출처: ${o.src}<br>※ 관계 기관 제안 근거용 외부 공개 자료. 드론 비행·촬영 전 드론원스톱 등 공식 채널 별도 승인 확인 필수(항공안전법·문화재보호법).</div>`;
   document.getElementById('detail').classList.add('open');
 }
